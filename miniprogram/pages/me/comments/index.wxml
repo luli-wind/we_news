@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="section-head">发布评论</view>
+
+  <block wx:for="{{list}}" wx:key="id">
+    <view class="comment-row">
+      <view class="comment-main">
+        <view class="comment-content">{{item.content}}</view>
+        <view class="comment-time">{{item.bizType}} #{{item.bizId}}</view>
+      </view>
+      <view class="comment-thumb"></view>
+    </view>
+  </block>
+
+  <view wx:if="{{!list.length}}" class="empty-state">暂无评论</view>
+</view>

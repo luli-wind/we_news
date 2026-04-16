@@ -1,0 +1,39 @@
+<view class="video-page">
+  <view class="video-head">
+    <view class="url-bar">
+      <text class="url-prefix">搜</text>
+      <input class="url-input" placeholder="搜索视频" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
+    </view>
+  </view>
+
+  <view wx:if="{{featured}}" class="featured-card">
+    <video class="featured-player" src="{{featured.url}}" poster="{{featured.coverUrl}}" controls></video>
+    <view class="featured-title">{{featured.title}}</view>
+    <view class="featured-meta">原创 | {{featured.playCount}}</view>
+
+    <view class="op-row">
+      <view class="op-btn">点赞 311</view>
+      <view class="op-btn">点踩 54</view>
+    </view>
+
+    <view class="author-row">
+      <view class="author-dot"></view>
+      <view class="author-name">{{featured.authorText}}</view>
+    </view>
+  </view>
+
+  <block wx:for="{{list}}" wx:key="id">
+    <view class="video-item">
+      <view class="video-item-main">
+        <view class="video-item-title">{{item.title}}</view>
+        <view class="video-item-meta">{{item.authorText}} {{item.playCount}}</view>
+      </view>
+      <image class="video-item-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
+    </view>
+  </block>
+
+  <view class="foot-input">
+    <view class="comment-input">写评论...</view>
+    <view class="foot-icons">评论 收藏 点赞</view>
+  </view>
+</view>

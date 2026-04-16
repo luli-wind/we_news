@@ -1,0 +1,136 @@
+.submit-page {
+  min-height: 100vh;
+  background: #f3f4f6;
+  padding: 20rpx 20rpx 120rpx;
+  box-sizing: border-box;
+}
+
+.editor-card {
+  background: #ffffff;
+  border-radius: 18rpx;
+  padding: 24rpx;
+  box-shadow: 0 8rpx 22rpx rgba(15, 23, 42, 0.06);
+}
+
+.editor-title {
+  text-align: center;
+  font-size: 50rpx;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24rpx;
+}
+
+.field-label {
+  margin-top: 12rpx;
+  font-size: 30rpx;
+  color: #374151;
+  font-weight: 600;
+}
+
+.field-input {
+  margin-top: 10rpx;
+  height: 70rpx;
+  border-radius: 12rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  padding: 0 16rpx;
+  font-size: 26rpx;
+}
+
+.field-textarea {
+  margin-top: 10rpx;
+  height: 260rpx;
+  border-radius: 12rpx;
+  background: #f8fafc;
+  border: 1rpx solid #e5e7eb;
+  padding: 16rpx;
+  box-sizing: border-box;
+  font-size: 26rpx;
+}
+
+.media-wrap {
+  margin-top: 12rpx;
+}
+
+.upload-box {
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 14rpx;
+  border: 2rpx dashed #d1d5db;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-plus {
+  font-size: 72rpx;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.upload-tip {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.media-box {
+  width: 360rpx;
+  height: 220rpx;
+  border-radius: 14rpx;
+  overflow: hidden;
+  position: relative;
+  background: #f3f4f6;
+}
+
+.media-image,
+.media-video {
+  width: 100%;
+  height: 100%;
+}
+
+.remove-media {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 36rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 24rpx;
+}
+
+.uploading {
+  margin-top: 12rpx;
+  color: #d97706;
+  font-size: 24rpx;
+}
+
+.submit-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  border-top: 1rpx solid #e5e7eb;
+  padding: 14rpx 20rpx calc(14rpx + env(safe-area-inset-bottom));
+}
+
+.submit-btn {
+  height: 74rpx;
+  line-height: 74rpx;
+  border-radius: 12rpx;
+  background: linear-gradient(120deg, #e24b4b 0%, #c83434 100%);
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.submit-btn::after {
+  border: none;
+}

@@ -1,0 +1,26 @@
+﻿# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Java
+backend/target/
+backend/.mvn/
+
+# Node
+admin-web/node_modules/
+admin-web/dist/
+
+# WeChat
+miniprogram/project.private.config.json
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*

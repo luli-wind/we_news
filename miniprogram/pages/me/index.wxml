@@ -1,0 +1,50 @@
+<view class="me-page">
+  <view class="profile-head">
+    <view class="profile-row">
+      <view class="avatar-circle">{{avatarText}}</view>
+      <view class="user-info">
+        <view class="user-name">{{nicknameText}}</view>
+        <view class="user-role">{{roleText}}</view>
+      </view>
+      <view class="arrow">></view>
+    </view>
+  </view>
+
+  <view class="quick-grid">
+    <view class="quick-item" bindtap="goFavorites">
+      <view class="quick-icon">收藏</view>
+      <view class="quick-title">收藏夹</view>
+      <view class="quick-num">{{favoriteCount}}</view>
+    </view>
+    <view class="quick-item" bindtap="goSubmissions">
+      <view class="quick-icon">作品</view>
+      <view class="quick-title">作品集</view>
+      <view class="quick-num">{{submissionCount}}</view>
+    </view>
+    <view class="quick-item" bindtap="goComments">
+      <view class="quick-icon">评论</view>
+      <view class="quick-title">我的评论</view>
+      <view class="quick-num">{{commentCount}}</view>
+    </view>
+  </view>
+
+  <view class="menu-card" bindtap="goSubmissionCenter">
+    <view>创作中心</view>
+    <view class="menu-arrow">></view>
+  </view>
+
+  <view class="menu-list">
+    <view class="menu-row">
+      <view>消息通知</view>
+      <view class="menu-arrow">></view>
+    </view>
+    <view class="menu-row">
+      <view>关于我们</view>
+      <view class="menu-arrow">></view>
+    </view>
+    <view class="menu-row">
+      <view>系统设置</view>
+      <view class="menu-arrow">></view>
+    </view>
+  </view>
+</view>

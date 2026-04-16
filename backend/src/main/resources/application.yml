@@ -1,0 +1,44 @@
+﻿server:
+  port: 8080
+
+spring:
+  application:
+    name: news-platform
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/wenews?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 123456
+
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+jwt:
+  secret: 7sVg7Wj4D9kL2hN1qP8xC0zM5rY3uA6t
+  access-token-expire-seconds: 7200
+  refresh-token-expire-seconds: 604800
+
+app:
+  file:
+    storage-type: local
+    local-dir: uploads
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

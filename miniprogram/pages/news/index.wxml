@@ -1,0 +1,51 @@
+<view class="news-page">
+  <view class="top-bar">
+    <view class="brand-row">
+      <view class="brand-title">今日头条</view>
+      <view class="search-box">
+        <text class="search-mark">搜</text>
+        <input class="search-input" placeholder="搜索新闻" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
+      </view>
+    </view>
+
+    <scroll-view class="tab-scroll" scroll-x="true" show-scrollbar="false">
+      <view class="tab-list">
+        <block wx:for="{{tabs}}" wx:key="index">
+          <view class="tab-item {{item.activeClass}}" data-index="{{item.index}}" bindtap="switchTab">{{item.name}}</view>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="update-tip">智能推荐已更新 10 条内容</view>
+
+  <view wx:if="{{hero}}" class="hero-card" data-id="{{hero.id}}" bindtap="goDetail">
+    <image class="hero-image" src="{{hero.coverUrl}}" mode="aspectFill" />
+    <view class="hero-title">{{hero.title}}</view>
+    <view class="hero-meta">{{hero.sourceText}} {{hero.commentCount}}评论 {{hero.relativeTime}}</view>
+  </view>
+
+  <block wx:for="{{feed}}" wx:key="id">
+    <view class="feed-card" data-id="{{item.id}}" bindtap="goDetail">
+      <view class="feed-title">{{item.title}}</view>
+
+      <view wx:if="{{item.isSingle}}" class="single-row">
+        <view class="single-summary">{{item.summary}}</view>
+        <image class="single-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
+      </view>
+
+      <view wx:if="{{item.isTriple}}" class="triple-row">
+        <block wx:for="{{item.thumbs}}" wx:key="index">
+          <image class="triple-thumb" src="{{item}}" mode="aspectFill" />
+        </block>
+      </view>
+
+      <view class="feed-meta">
+        <text class="hot-mark">热</text>
+        <text>{{item.sourceText}} {{item.commentCount}}评论 {{item.relativeTime}}</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{showEmpty && !loading}}" class="empty-block">暂无数据，试试其他关键词</view>
+</view>

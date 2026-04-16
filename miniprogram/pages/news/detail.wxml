@@ -1,0 +1,52 @@
+<view class="detail-page">
+  <view class="article-wrap">
+    <view class="article-title">{{detail.title}}</view>
+
+    <view class="author-row">
+      <view class="author-avatar"></view>
+      <view class="author-info">
+        <view class="author-name">{{authorName}}</view>
+        <view class="author-time">{{publishTimeText}}</view>
+      </view>
+    </view>
+
+    <block wx:for="{{paragraphs}}" wx:key="index">
+      <view class="paragraph">{{item}}</view>
+    </block>
+
+    <view class="tag-row">
+      <text class="tag-item">大气科学</text>
+      <text class="tag-item">天气</text>
+      <text class="tag-item">社会</text>
+    </view>
+
+    <view class="vote-row">
+      <view class="vote-btn vote-btn--up">点赞 {{supportCount}}</view>
+      <view class="vote-btn vote-btn--down">点踩 {{opposeCount}}</view>
+      <view class="collect-btn" bindtap="toggleFavorite">{{favoriteButtonText}}</view>
+    </view>
+  </view>
+
+  <view class="comment-head">评论 {{commentCount}}</view>
+
+  <block wx:for="{{comments}}" wx:key="id">
+    <view class="comment-item">
+      <view class="comment-top">
+        <view class="comment-avatar"></view>
+        <view class="comment-user">{{item.displayName}}</view>
+        <view class="comment-like">赞 {{item.likeCount}}</view>
+      </view>
+      <view class="comment-content">{{item.content}}</view>
+      <view class="comment-time">{{item.timeText}}</view>
+      <view class="reply-btn" data-id="{{item.id}}" data-nickname="{{item.displayName}}" bindtap="selectReply">回复</view>
+    </view>
+  </block>
+
+  <view class="comment-input-box">
+    <view wx:if="{{replyHint}}" class="reply-tip">{{replyHint}} <text bindtap="clearReply">取消</text></view>
+    <view class="input-row">
+      <input class="comment-input" placeholder="写评论..." value="{{commentText}}" bindinput="onCommentInput" />
+      <button class="send-btn" bindtap="submitComment">发送</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,37 @@
+.section-head {
+  font-size: 46rpx;
+  font-weight: 700;
+  margin-bottom: 20rpx;
+}
+
+.list-item {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 18rpx;
+  margin-bottom: 12rpx;
+  display: flex;
+  align-items: center;
+}
+
+.thumb-slot {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: #e5e7eb;
+}
+
+.item-main {
+  flex: 1;
+  margin-left: 16rpx;
+}
+
+.item-title {
+  font-size: 34rpx;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.status {
+  color: #64748b;
+  font-size: 26rpx;
+}

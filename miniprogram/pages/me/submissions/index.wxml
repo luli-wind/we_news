@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="section-head">发布作品</view>
+
+  <block wx:for="{{list}}" wx:key="id">
+    <view class="list-item">
+      <view class="thumb-slot"></view>
+      <view class="item-main">
+        <view class="item-title">{{item.title}}</view>
+      </view>
+      <view class="status">{{item.status}}</view>
+    </view>
+  </block>
+
+  <view wx:if="{{!list.length}}" class="empty-state">暂无发布作品</view>
+</view>

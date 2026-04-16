@@ -1,0 +1,34 @@
+<view class="submit-page">
+  <view class="editor-card">
+    <view class="editor-title">创作中心</view>
+
+    <view class="field-label">标题</view>
+    <input class="field-input" placeholder="请输入标题" value="{{form.title}}" bindinput="onInputTitle" maxlength="60" />
+
+    <view class="field-label">内容</view>
+    <textarea class="field-textarea" placeholder="请输入正文内容..." value="{{form.content}}" bindinput="onInputContent" maxlength="3000" />
+
+    <view class="field-label">媒体</view>
+    <view class="media-wrap">
+      <view wx:if="{{!form.mediaUrl}}" class="upload-box" bindtap="chooseMedia">
+        <view class="upload-plus">+</view>
+        <view class="upload-tip">点击上传</view>
+      </view>
+
+      <view wx:if="{{form.mediaUrl}}" class="media-box">
+        <image wx:if="{{hasImage}}" class="media-image" src="{{form.mediaUrl}}" mode="aspectFill" />
+        <video wx:if="{{hasVideo}}" class="media-video" src="{{form.mediaUrl}}" controls></video>
+        <view class="remove-media" bindtap="clearMedia">删</view>
+      </view>
+    </view>
+
+    <view class="field-label">媒体地址（可选）</view>
+    <input class="field-input" placeholder="可粘贴媒体地址" value="{{form.mediaUrl}}" bindinput="onInputMediaUrl" />
+
+    <view wx:if="{{uploading}}" class="uploading">上传中...</view>
+  </view>
+
+  <view class="submit-footer">
+    <button class="submit-btn" bindtap="submit">发布</button>
+  </view>
+</view>
