@@ -18,6 +18,9 @@ public class News {
     private String content;
     private String category;
     private String coverUrl;
+    private String sourceName;
+    private String sourceUrl;
+    private String originHash;
     private String status;
     private Long authorId;
     private LocalDateTime publishedAt;

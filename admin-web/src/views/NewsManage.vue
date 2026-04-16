@@ -9,20 +9,22 @@
 
     <div class="card-surface">
       <div class="toolbar-row">
-        <el-input v-model="query.keyword" placeholder="搜索标题" style="width: 260px" clearable />
-        <el-select v-model="query.status" placeholder="状态" clearable style="width: 160px">
+        <el-input v-model="query.keyword" placeholder="搜索标题" style="width: 240px" clearable />
+        <el-select v-model="query.status" placeholder="状态" clearable style="width: 150px">
           <el-option label="草稿" value="DRAFT" />
           <el-option label="已发布" value="PUBLISHED" />
           <el-option label="已驳回" value="REJECTED" />
         </el-select>
         <el-button type="primary" @click="load">查询</el-button>
+        <el-button type="warning" :loading="syncing" @click="syncNews">同步国内新闻</el-button>
         <el-button type="success" @click="openCreate">新建新闻</el-button>
       </div>
 
       <el-table :data="list" border>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" min-width="220" />
-        <el-table-column prop="category" label="分类" width="130" />
+        <el-table-column prop="sourceName" label="来源" width="140" />
+        <el-table-column prop="category" label="分类" width="120" />
         <el-table-column prop="status" label="状态" width="120">
           <template #default="scope">
             <el-tag :type="statusType(scope.row.status)">{{ statusText(scope.row.status) }}</el-tag>
@@ -73,11 +75,12 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { fetchNews, createNews, updateNews, deleteNews } from '../api/modules'
+import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews } from '../api/modules'
 
 const query = reactive({ page: 1, pageSize: 10, keyword: '', status: '' })
 const total = ref(0)
 const list = ref([])
+const syncing = ref(false)
 const showDialog = ref(false)
 const form = reactive({ id: null, title: '', summary: '', content: '', category: '', coverUrl: '', status: 'DRAFT' })
 
@@ -134,6 +137,18 @@ const remove = async (id) => {
   await deleteNews(id)
   ElMessage.success('删除成功')
   load()
+}
+
+const syncNews = async () => {
+  syncing.value = true
+  try {
+    const data = await syncDomesticNews()
+    ElMessage.success(`同步完成：新增 ${data.imported}，跳过 ${data.skipped}，失败 ${data.failed}`)
+    query.page = 1
+    await load()
+  } finally {
+    syncing.value = false
+  }
 }
 
 onMounted(load)

@@ -14,7 +14,7 @@
           <el-option label="同意发布" value="APPROVED" />
           <el-option label="拒绝发布" value="REJECTED" />
         </el-select>
-        <el-button type="primary" @click="load">Search</el-button>
+        <el-button type="primary" @click="load">查找</el-button>
       </div>
 
       <el-table :data="list" border>

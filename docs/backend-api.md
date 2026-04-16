@@ -17,6 +17,7 @@ Base URL: `http://127.0.0.1:8080`
 - `PUT /api/news/{id}` (ADMIN/EDITOR)
 - `DELETE /api/news/{id}` (ADMIN/EDITOR)
 - `GET /api/admin/news` (ADMIN/EDITOR)
+- `POST /api/admin/news/sync/domestic` (ADMIN/EDITOR)
 
 ## Videos
 
@@ -87,3 +88,53 @@ Pagination response:
   "list": []
 }
 ```
+
+### Sync Domestic News
+
+Endpoint:
+
+- `POST /api/admin/news/sync/domestic`
+
+Request body (optional):
+
+```json
+{
+  "sources": ["people_society", "xinhuanet_world"],
+  "limitPerFeed": 20
+}
+```
+
+Response `data`:
+
+```json
+{
+  "imported": 10,
+  "skipped": 4,
+  "failed": 0,
+  "details": [
+    {
+      "source": "人民网",
+      "sourceKey": "people_society",
+      "feedUrl": "http://www.people.com.cn/rss/society.xml",
+      "imported": 6,
+      "skipped": 2,
+      "failed": 0,
+      "message": "ok"
+    }
+  ]
+}
+```
+
+Supported source keys:
+
+- `chinanews_top`
+- `people_society`
+- `people_finance`
+- `xinhuanet_politics`
+- `xinhuanet_world`
+
+`GET /api/news` and `GET /api/news/{id}` now include extra fields:
+
+- `sourceName`
+- `sourceUrl`
+- `originHash`

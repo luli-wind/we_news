@@ -4,6 +4,8 @@ import com.course.newsplatform.common.ApiResponse;
 import com.course.newsplatform.common.PageResponse;
 import com.course.newsplatform.dto.NewsQueryRequest;
 import com.course.newsplatform.dto.NewsSaveRequest;
+import com.course.newsplatform.dto.NewsSyncRequest;
+import com.course.newsplatform.dto.NewsSyncResult;
 import com.course.newsplatform.entity.News;
 import com.course.newsplatform.service.NewsService;
 import jakarta.validation.Valid;
@@ -53,5 +55,11 @@ public class NewsController {
     public ApiResponse<Void> delete(@PathVariable Long id) {
         newsService.delete(id);
         return ApiResponse.success();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    @PostMapping("/api/admin/news/sync/domestic")
+    public ApiResponse<NewsSyncResult> syncDomestic(@Valid @RequestBody(required = false) NewsSyncRequest request) {
+        return ApiResponse.success(newsService.syncDomesticNews(request));
     }
 }

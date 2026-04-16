@@ -6,6 +6,7 @@ export const fetchNews = (params) => request.get('/api/admin/news', { params })
 export const createNews = (data) => request.post('/api/news', data)
 export const updateNews = (id, data) => request.put(`/api/news/${id}`, data)
 export const deleteNews = (id) => request.delete(`/api/news/${id}`)
+export const syncDomesticNews = (data = {}) => request.post('/api/admin/news/sync/domestic', data)
 
 export const fetchVideos = (params) => request.get('/api/admin/videos', { params })
 export const createVideo = (data) => request.post('/api/videos', data)

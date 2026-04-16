@@ -61,6 +61,7 @@ Page({
         pageSize: 20,
         keyword: this.data.keyword
       })
+
       const list = data && Array.isArray(data.list) ? data.list : []
       if (!list.length) {
         this.setData({ hero: null, feed: [], showEmpty: true })
@@ -72,19 +73,15 @@ Page({
         return {
           id: item.id,
           title: item.title || '未命名新闻',
-          summary: item.summary || '这是一条新闻摘要。',
+          summary: item.summary || '暂无摘要',
           categoryText: item.category || '推荐',
           coverUrl,
           relativeTime: relativeTime(item.publishedAt || item.createdAt),
           commentCount: (item.id % 3000) + 20,
-          sourceText: idx % 2 === 0 ? '环球网' : '大河客户端',
+          sourceText: item.sourceName || item.category || '新闻源',
           isSingle: idx % 3 !== 0,
           isTriple: idx % 3 === 0,
-          thumbs: [
-            coverUrl,
-            fallbackCover + '&seed=2',
-            fallbackCover + '&seed=3'
-          ]
+          thumbs: [coverUrl, `${fallbackCover}&seed=2`, `${fallbackCover}&seed=3`]
         }
       })
 
@@ -94,7 +91,8 @@ Page({
         showEmpty: false
       })
     } catch (error) {
-      wx.showToast({ title: '加载失败', icon: 'none' })
+      const msg = (error && error.message) ? error.message.slice(0, 32) : '加载失败'
+      wx.showToast({ title: msg, icon: 'none' })
       this.setData({ hero: null, feed: [], showEmpty: true })
     } finally {
       this.setData({ loading: false })

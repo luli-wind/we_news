@@ -9,7 +9,7 @@
 
     <div class="card-surface">
       <div class="toolbar-row">
-        <el-button type="primary" @click="load">Refresh</el-button>
+        <el-button type="primary" @click="load">刷新</el-button>
       </div>
 
       <el-table :data="list" border>

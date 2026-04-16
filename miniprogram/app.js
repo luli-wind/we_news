@@ -1,27 +1,27 @@
+const { request, BASE_URL } = require('./utils/request')
+
 App({
   onLaunch() {
+    console.info('[app] active BASE_URL:', BASE_URL)
     this.login()
   },
 
   login() {
     wx.login({
       success: (res) => {
-        wx.request({
-          url: 'http://127.0.0.1:8080/api/auth/wechat/login',
-          method: 'POST',
-          data: {
-            code: res.code,
-            nickname: '小程序用户'
-          },
-          success: (resp) => {
-            const payload = resp.data
-            if (payload && payload.code === 0 && payload.data) {
-              wx.setStorageSync('accessToken', payload.data.accessToken)
-              wx.setStorageSync('refreshToken', payload.data.refreshToken)
-              wx.setStorageSync('nickname', payload.data.nickname)
-            }
-          }
+        request('/api/auth/wechat/login', 'POST', {
+          code: res.code,
+          nickname: 'MiniUser'
         })
+          .then((data) => {
+            if (!data) return
+            wx.setStorageSync('accessToken', data.accessToken || '')
+            wx.setStorageSync('refreshToken', data.refreshToken || '')
+            wx.setStorageSync('nickname', data.nickname || 'MiniUser')
+          })
+          .catch((error) => {
+            console.error('wechat login failed:', error && error.message)
+          })
       }
     })
   }

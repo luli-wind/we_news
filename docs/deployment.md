@@ -40,10 +40,31 @@ Default admin:
 ## 4. WeChat Mini Program
 
 1. Open `miniprogram` in WeChat DevTools
-2. Ensure backend API is reachable (update `miniprogram/utils/request.js` if needed)
+2. Configure API addresses in `miniprogram/utils/config.js`:
+   - `develop`:
+     - DevTools simulator: use `127.0.0.1/localhost`
+     - Real-device debug: use your LAN IP (for this setup: `http://10.27.219.96:8080`)
+   - `trial` / `release`: must be deployed HTTPS backend domain
 3. Start preview/debug
 
-## 5. Suggested Demo Accounts
+Real-device debug notes:
+
+- `127.0.0.1` / `localhost` points to the phone itself, not your computer.
+- If you ever set `wx.setStorageSync('apiBaseUrl', '...')`, clear it when needed:
+  - `wx.removeStorageSync('apiBaseUrl')`
+
+Preview/experience version notes:
+
+- Requests must use HTTPS domain configured in WeChat Mini Program legal request domains.
+
+## 5. Domestic RSS sync (manual)
+
+1. Login admin web with `admin` or `editor`
+2. Open **新闻管理**
+3. Click **同步国内新闻**
+4. Verify mini program can read data from `GET /api/news`
+
+## 6. Suggested Demo Accounts
 
 - Admin: `admin / Admin@123`
 - Editor: `editor / Editor@123`

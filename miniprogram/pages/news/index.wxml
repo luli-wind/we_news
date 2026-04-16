@@ -3,21 +3,21 @@
     <view class="brand-row">
       <view class="brand-title">今日头条</view>
       <view class="search-box">
-        <text class="search-mark">搜</text>
+        <text class="search-mark"></text>
         <input class="search-input" placeholder="搜索新闻" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
       </view>
     </view>
 
-    <scroll-view class="tab-scroll" scroll-x="true" show-scrollbar="false">
+    <!-- <scroll-view class="tab-scroll" scroll-x="true" show-scrollbar="false">
       <view class="tab-list">
         <block wx:for="{{tabs}}" wx:key="index">
           <view class="tab-item {{item.activeClass}}" data-index="{{item.index}}" bindtap="switchTab">{{item.name}}</view>
         </block>
       </view>
-    </scroll-view>
+    </scroll-view> -->
   </view>
 
-  <view class="update-tip">智能推荐已更新 10 条内容</view>
+  <!-- <view class="update-tip">智能推荐已更新 10 条内容</view> -->
 
   <view wx:if="{{hero}}" class="hero-card" data-id="{{hero.id}}" bindtap="goDetail">
     <image class="hero-image" src="{{hero.coverUrl}}" mode="aspectFill" />

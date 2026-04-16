@@ -50,7 +50,7 @@ Page({
   async loadDetail() {
     try {
       const detail = await request(`/api/news/${this.data.id}`)
-      const authorName = detail && detail.category ? detail.category : '新闻中心'
+      const authorName = (detail && (detail.sourceName || detail.category)) || '新闻中心'
       this.setData({
         detail: detail || {},
         authorName,
@@ -65,12 +65,14 @@ Page({
   async loadComments() {
     try {
       const list = await request('/api/comments', 'GET', { bizType: 'NEWS', bizId: this.data.id })
-      const comments = Array.isArray(list) ? list.map((item, idx) => ({
-        ...item,
-        displayName: item.userNickname || '用户',
-        timeText: toRelativeTime(item.createdAt),
-        likeCount: (idx + 1) * 17
-      })) : []
+      const comments = Array.isArray(list)
+        ? list.map((item, idx) => ({
+            ...item,
+            displayName: item.userNickname || '用户',
+            timeText: toRelativeTime(item.createdAt),
+            likeCount: (idx + 1) * 17
+          }))
+        : []
       this.setData({ comments, commentCount: comments.length })
     } catch (error) {
       wx.showToast({ title: '评论加载失败', icon: 'none' })
