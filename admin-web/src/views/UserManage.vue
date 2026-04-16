@@ -1,32 +1,40 @@
 <template>
-  <div>
-    <div class="toolbar">
-      <el-button type="primary" @click="load">刷新</el-button>
+  <div class="admin-page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">用户与角色</h1>
+        <p class="page-subtitle">为后台账户分配权限角色</p>
+      </div>
     </div>
 
-    <el-table :data="list" border>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="username" label="用户名" width="180" />
-      <el-table-column prop="nickname" label="昵称" />
-      <el-table-column label="角色分配" width="280">
-        <template #default="scope">
-          <el-select v-model="roleMap[scope.row.id]" placeholder="选择角色" style="width: 140px">
-            <el-option v-for="role in roles" :key="role.id" :label="role.code" :value="role.id" />
-          </el-select>
-          <el-button size="small" type="success" @click="assign(scope.row.id)">分配</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="card-surface">
+      <div class="toolbar-row">
+        <el-button type="primary" @click="load">Refresh</el-button>
+      </div>
 
-    <el-pagination
-      style="margin-top: 12px"
-      background
-      layout="prev, pager, next, total"
-      :total="total"
-      :page-size="query.pageSize"
-      :current-page="query.page"
-      @current-change="onPageChange"
-    />
+      <el-table :data="list" border>
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="username" label="账号" width="180" />
+        <el-table-column prop="nickname" label="用户名" min-width="140" />
+        <el-table-column label="角色分配" width="300">
+          <template #default="scope">
+            <el-select v-model="roleMap[scope.row.id]" placeholder="选择角色" style="width: 150px">
+              <el-option v-for="role in roles" :key="role.id" :label="role.code" :value="role.id" />
+            </el-select>
+            <el-button size="small" type="success" @click="assign(scope.row.id)">分配</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-pagination
+        background
+        layout="prev, pager, next, total"
+        :total="total"
+        :page-size="query.pageSize"
+        :current-page="query.page"
+        @current-change="onPageChange"
+      />
+    </div>
   </div>
 </template>
 
@@ -59,18 +67,12 @@ const onPageChange = (val) => {
 const assign = async (userId) => {
   const roleId = roleMap[userId]
   if (!roleId) {
-    ElMessage.warning('请先选择角色')
+    ElMessage.warning('Please choose a role first')
     return
   }
   await assignUserRole({ userId, roleId })
-  ElMessage.success('分配成功')
+  ElMessage.success('Role assigned')
 }
 
 onMounted(load)
 </script>
-
-<style scoped>
-.toolbar {
-  margin-bottom: 12px;
-}
-</style>

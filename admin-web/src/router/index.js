@@ -9,15 +9,15 @@ import UserManage from '../views/UserManage.vue'
 import LogsManage from '../views/LogsManage.vue'
 
 const routes = [
-  { path: '/login', component: Login },
+  { path: '/login', component: Login, meta: { title: '登录' } },
   { path: '/', redirect: '/dashboard' },
-  { path: '/dashboard', component: Dashboard, meta: { auth: true } },
-  { path: '/news', component: NewsManage, meta: { auth: true } },
-  { path: '/videos', component: VideoManage, meta: { auth: true } },
-  { path: '/comments', component: CommentManage, meta: { auth: true } },
-  { path: '/submissions', component: SubmissionManage, meta: { auth: true } },
-  { path: '/users', component: UserManage, meta: { auth: true, adminOnly: true } },
-  { path: '/logs', component: LogsManage, meta: { auth: true, adminOnly: true } }
+  { path: '/dashboard', component: Dashboard, meta: { auth: true, title: '仪表盘' } },
+  { path: '/news', component: NewsManage, meta: { auth: true, title: '新闻管理' } },
+  { path: '/videos', component: VideoManage, meta: { auth: true, title: '视频管理' } },
+  { path: '/comments', component: CommentManage, meta: { auth: true, title: '评论管理' } },
+  { path: '/submissions', component: SubmissionManage, meta: { auth: true, title: '投稿审核' } },
+  { path: '/users', component: UserManage, meta: { auth: true, adminOnly: true, title: '用户与角色' } },
+  { path: '/logs', component: LogsManage, meta: { auth: true, adminOnly: true, title: '操作日志' } }
 ]
 
 const router = createRouter({

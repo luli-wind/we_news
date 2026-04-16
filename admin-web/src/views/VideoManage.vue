@@ -1,45 +1,57 @@
 <template>
-  <div>
-    <div class="toolbar">
-      <el-input v-model="query.keyword" placeholder="搜索标题" style="width: 240px" />
-      <el-button type="primary" @click="load">查询</el-button>
-      <el-button type="success" @click="openCreate">新建视频</el-button>
+  <div class="admin-page">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">视频管理</h1>
+        <p class="page-subtitle">维护视频资源与发布状态</p>
+      </div>
     </div>
 
-    <el-table :data="list" border>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="title" label="标题" />
-      <el-table-column prop="status" label="状态" width="120" />
-      <el-table-column prop="url" label="视频URL" />
-      <el-table-column label="操作" width="220">
-        <template #default="scope">
-          <el-button size="small" @click="openEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="remove(scope.row.id)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="card-surface">
+      <div class="toolbar-row">
+        <el-input v-model="query.keyword" placeholder="搜索标题" style="width: 260px" clearable />
+        <el-button type="primary" @click="load">查询</el-button>
+        <el-button type="success" @click="openCreate">新建视频</el-button>
+      </div>
 
-    <el-pagination
-      style="margin-top: 12px"
-      background
-      layout="prev, pager, next, total"
-      :total="total"
-      :page-size="query.pageSize"
-      :current-page="query.page"
-      @current-change="onPageChange"
-    />
+      <el-table :data="list" border>
+        <el-table-column prop="id" label="编号" width="80" />
+        <el-table-column prop="title" label="标题" min-width="220" />
+        <el-table-column prop="status" label="状态" width="120">
+          <template #default="scope">
+            <el-tag :type="statusType(scope.row.status)">{{ statusText(scope.row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="url" label="视频地址" min-width="240" />
+        <el-table-column label="操作" width="210" fixed="right">
+          <template #default="scope">
+            <el-button size="small" @click="openEdit(scope.row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="remove(scope.row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
 
-    <el-dialog v-model="showDialog" :title="form.id ? '编辑视频' : '新建视频'" width="700px">
-      <el-form :model="form" label-width="100px">
+      <el-pagination
+        background
+        layout="prev, pager, next, total"
+        :total="total"
+        :page-size="query.pageSize"
+        :current-page="query.page"
+        @current-change="onPageChange"
+      />
+    </div>
+
+    <el-dialog v-model="showDialog" :title="form.id ? '编辑视频' : '新建视频'" width="740px">
+      <el-form :model="form" label-width="110px">
         <el-form-item label="标题"><el-input v-model="form.title" /></el-form-item>
-        <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="5" /></el-form-item>
-        <el-form-item label="视频URL"><el-input v-model="form.url" /></el-form-item>
-        <el-form-item label="封面URL"><el-input v-model="form.coverUrl" /></el-form-item>
+        <el-form-item label="简介"><el-input v-model="form.description" type="textarea" :rows="5" /></el-form-item>
+        <el-form-item label="视频地址"><el-input v-model="form.url" /></el-form-item>
+        <el-form-item label="封面地址"><el-input v-model="form.coverUrl" /></el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="form.status" style="width: 160px">
+          <el-select v-model="form.status" style="width: 170px">
             <el-option label="草稿" value="DRAFT" />
             <el-option label="已发布" value="PUBLISHED" />
-            <el-option label="驳回" value="REJECTED" />
+            <el-option label="已驳回" value="REJECTED" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -61,6 +73,18 @@ const total = ref(0)
 const list = ref([])
 const showDialog = ref(false)
 const form = reactive({ id: null, title: '', description: '', url: '', coverUrl: '', status: 'DRAFT' })
+
+const statusType = (status) => {
+  if (status === 'PUBLISHED') return 'success'
+  if (status === 'REJECTED') return 'danger'
+  return 'info'
+}
+
+const statusText = (status) => {
+  if (status === 'PUBLISHED') return '已发布'
+  if (status === 'REJECTED') return '已驳回'
+  return '草稿'
+}
 
 const load = async () => {
   const data = await fetchVideos(query)
@@ -85,7 +109,7 @@ const openEdit = (row) => {
 
 const save = async () => {
   if (!form.title || !form.url) {
-    ElMessage.warning('标题和视频URL必填')
+    ElMessage.warning('标题和视频地址不能为空')
     return
   }
   if (form.id) {
@@ -99,7 +123,7 @@ const save = async () => {
 }
 
 const remove = async (id) => {
-  await ElMessageBox.confirm('确认删除该视频?')
+  await ElMessageBox.confirm('确认删除该视频吗？')
   await deleteVideo(id)
   ElMessage.success('删除成功')
   load()
@@ -107,11 +131,3 @@ const remove = async (id) => {
 
 onMounted(load)
 </script>
-
-<style scoped>
-.toolbar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-</style>
