@@ -1,0 +1,45 @@
+<view class="login-page">
+  <view class="login-card">
+    <view class="logo-area">
+      <view class="logo-icon">📰</view>
+      <view class="app-name">今日资讯</view>
+      <view class="app-desc">登录后享受完整功能</view>
+    </view>
+
+    <view class="features">
+      <view class="feature-item">
+        <text class="feature-icon">⭐</text>
+        <text>收藏喜欢的新闻</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">💬</text>
+        <text>发表评论互动</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">✏️</text>
+        <text>发布原创内容</text>
+      </view>
+    </view>
+
+    <view class="user-info-area" wx:if="{{nickname}}">
+      <image wx:if="{{avatarUrl}}" class="user-avatar" src="{{avatarUrl}}" mode="aspectFill" />
+      <view wx:else class="user-avatar-placeholder">{{nickname.substring(0, 1)}}</view>
+      <view class="user-nickname">{{nickname}}</view>
+    </view>
+
+    <button
+      class="auth-btn"
+      open-type="getUserInfo"
+      bindgetuserinfo="handleGetUserInfo"
+      wx:if="{{!nickname}}"
+    >
+      获取微信昵称和头像
+    </button>
+
+    <button class="login-btn" bindtap="handleLogin" loading="{{loading}}" disabled="{{loading}}">
+      {{loading ? '登录中...' : '微信一键登录'}}
+    </button>
+
+    <view class="privacy-tip">登录即表示同意《用户协议》和《隐私政策》</view>
+  </view>
+</view>

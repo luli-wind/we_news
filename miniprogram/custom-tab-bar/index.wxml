@@ -1,0 +1,35 @@
+<view class="tab-bar">
+  <view
+    wx:for="{{list}}"
+    wx:key="index"
+    class="tab-item {{selected === index ? 'tab-item--active' : ''}}"
+    data-index="{{index}}"
+    bindtap="switchTab"
+  >
+    <view class="tab-icon">
+      <!-- 首页图标 -->
+      <block wx:if="{{item.icon === 'home'}}">
+        <view class="icon-home {{selected === index ? 'icon--active' : ''}}">
+          <view class="home-roof"></view>
+          <view class="home-body"></view>
+          <view class="home-door"></view>
+        </view>
+      </block>
+      <!-- 视频图标 -->
+      <block wx:elif="{{item.icon === 'video'}}">
+        <view class="icon-video {{selected === index ? 'icon--active' : ''}}">
+          <view class="video-outer"></view>
+          <view class="video-inner"></view>
+        </view>
+      </block>
+      <!-- 我的图标 -->
+      <block wx:else>
+        <view class="icon-user {{selected === index ? 'icon--active' : ''}}">
+          <view class="user-head"></view>
+          <view class="user-body"></view>
+        </view>
+      </block>
+    </view>
+    <view class="tab-text {{selected === index ? 'tab-text--active' : ''}}">{{item.text}}</view>
+  </view>
+</view>

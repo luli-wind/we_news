@@ -1,15 +1,5 @@
 const { request } = require('../../utils/request')
 
-function toParagraphs(content) {
-  if (!content) return ['暂无正文内容。']
-  const lines = String(content)
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter(line => !line.startsWith('原文链接：') && !line.startsWith('Original URL:'))
-  return lines.length ? lines : ['暂无正文内容。']
-}
-
 function toRelativeTime(source) {
   if (!source) return '刚刚'
   const date = new Date(source)
@@ -39,18 +29,13 @@ Page({
   data: {
     id: null,
     detail: {},
-    authorName: '新闻中心',
-    paragraphs: [],
+    descriptionLines: [],
+    publishTimeText: '',
     comments: [],
     commentCount: 0,
     commentText: '',
     replyParentId: null,
-    replyHint: '',
-    favorited: false,
-    favoriteButtonText: '收藏',
-    supportCount: 29,
-    opposeCount: 2,
-    publishTimeText: '刚刚'
+    replyHint: ''
   },
 
   onLoad(options) {
@@ -59,27 +44,27 @@ Page({
   },
 
   async loadAll() {
-    await Promise.all([this.loadDetail(), this.loadComments(), this.loadFavoriteStatus()])
+    await Promise.all([this.loadDetail(), this.loadComments()])
   },
 
   async loadDetail() {
     try {
-      const detail = await request(`/api/news/${this.data.id}`)
-      const authorName = (detail && (detail.sourceName || detail.category)) || '新闻中心'
+      const detail = await request(`/api/videos/${this.data.id}`)
       this.setData({
         detail: detail || {},
-        authorName,
-        paragraphs: toParagraphs(detail && detail.content),
+        descriptionLines: detail && detail.description
+          ? String(detail.description).split(/\n+/).filter(Boolean)
+          : [],
         publishTimeText: toRelativeTime(detail && (detail.publishedAt || detail.createdAt))
       })
     } catch (error) {
-      wx.showToast({ title: '详情加载失败', icon: 'none' })
+      wx.showToast({ title: '视频加载失败', icon: 'none' })
     }
   },
 
   async loadComments() {
     try {
-      const list = await request('/api/comments', 'GET', { bizType: 'NEWS', bizId: this.data.id })
+      const list = await request('/api/comments', 'GET', { bizType: 'VIDEO', bizId: this.data.id })
       const comments = flattenComments(list)
       this.setData({ comments, commentCount: comments.length })
     } catch (error) {
@@ -87,44 +72,16 @@ Page({
     }
   },
 
-  async loadFavoriteStatus() {
-    try {
-      const result = await request(`/api/favorites/${this.data.id}/status`)
-      this.setFavoriteState(Boolean(result && result.favorited))
-    } catch (error) {
-      this.setFavoriteState(false)
-    }
-  },
-
-  setFavoriteState(favorited) {
-    this.setData({
-      favorited,
-      favoriteButtonText: favorited ? '已收藏' : '收藏'
-    })
-  },
-
   ensureLogin() {
     if (getApp().isLoggedIn()) return true
     wx.showModal({
       title: '请先登录',
-      content: '登录后即可使用收藏和评论功能',
+      content: '登录后即可使用评论功能',
       success: (res) => {
         if (res.confirm) wx.navigateTo({ url: '/pages/login/index' })
       }
     })
     return false
-  },
-
-  async toggleFavorite() {
-    if (!this.ensureLogin()) return
-    try {
-      const result = await request(`/api/favorites/${this.data.id}/toggle`, 'POST')
-      const favorited = Boolean(result && result.favorited)
-      this.setFavoriteState(favorited)
-      wx.showToast({ title: favorited ? '收藏成功' : '取消收藏', icon: 'none' })
-    } catch (error) {
-      wx.showToast({ title: '操作失败', icon: 'none' })
-    }
   },
 
   onCommentInput(e) {
@@ -148,13 +105,9 @@ Page({
       wx.showToast({ title: '请输入评论内容', icon: 'none' })
       return
     }
-    if (content.length > 500) {
-      wx.showToast({ title: '评论内容不能超过500字', icon: 'none' })
-      return
-    }
     try {
       await request('/api/comments', 'POST', {
-        bizType: 'NEWS',
+        bizType: 'VIDEO',
         bizId: this.data.id,
         parentId: this.data.replyParentId,
         content
@@ -164,11 +117,7 @@ Page({
       this.loadComments()
     } catch (error) {
       const msg = (error && error.message) || '评论失败'
-      if (msg.indexOf('401') >= 0 || msg.indexOf('token') >= 0) {
-        wx.showToast({ title: '请先登录后再评论', icon: 'none' })
-      } else {
-        wx.showToast({ title: msg.slice(0, 20), icon: 'none' })
-      }
+      wx.showToast({ title: msg.indexOf('401') >= 0 ? '请先登录' : '评论失败', icon: 'none' })
     }
   },
 
@@ -185,8 +134,7 @@ Page({
           wx.showToast({ title: '已删除', icon: 'none' })
           this.loadComments()
         } catch (error) {
-          const msg = (error && error.message) || '删除失败'
-          wx.showToast({ title: msg.slice(0, 20), icon: 'none' })
+          wx.showToast({ title: '删除失败', icon: 'none' })
         }
       }
     })

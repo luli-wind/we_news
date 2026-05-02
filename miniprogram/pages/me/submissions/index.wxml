@@ -1,15 +1,50 @@
-<view class="container">
-  <view class="section-head">发布作品</view>
+<view class="submissions-page">
+  <view class="page-header">
+    <view class="page-title">我的投稿</view>
+    <view class="page-count">共 {{list.length}} 篇</view>
+  </view>
 
-  <block wx:for="{{list}}" wx:key="id">
-    <view class="list-item">
-      <view class="thumb-slot"></view>
-      <view class="item-main">
-        <view class="item-title">{{item.title}}</view>
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="loading-dot"></view>
+    <text>加载中...</text>
+  </view>
+
+  <block wx:elif="{{list.length > 0}}">
+    <view wx:for="{{list}}" wx:key="id" class="submission-card">
+      <view class="card-header">
+        <view class="card-status {{item.statusInfo.class}}">{{item.statusInfo.label}}</view>
+        <view class="card-time">{{item.timeText}}</view>
       </view>
-      <view class="status">{{item.status}}</view>
+
+      <view class="card-title">{{item.title}}</view>
+      <view wx:if="{{item.content}}" class="card-content">{{item.content}}</view>
+
+      <view wx:if="{{item.mediaUrl}}" class="card-media">
+        <image wx:if="{{item.mediaType === 'IMAGE'}}" class="card-media-img" src="{{item.mediaUrl}}" mode="aspectFill" />
+        <video wx:elif="{{item.mediaType === 'VIDEO'}}" class="card-media-video" src="{{item.mediaUrl}}" controls></video>
+      </view>
+
+      <!-- 驳回原因 -->
+      <view wx:if="{{item.status === 'REJECTED' && item.reviewRemark}}" class="reject-reason">
+        <view class="reject-label">驳回原因</view>
+        <view class="reject-text">{{item.reviewRemark}}</view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="card-actions">
+        <view wx:if="{{item.status === 'APPROVED' && item.publishedNewsId}}" class="action-btn action-btn--view" data-news-id="{{item.publishedNewsId}}" bindtap="goDetail">
+          查看文章
+        </view>
+        <view wx:if="{{item.status === 'REJECTED'}}" class="action-btn action-btn--resubmit" data-item="{{item}}" bindtap="resubmit">
+          再发一条
+        </view>
+      </view>
     </view>
   </block>
 
-  <view wx:if="{{!list.length}}" class="empty-state">暂无发布作品</view>
+  <view wx:else class="empty-state">
+    <view class="empty-icon">📝</view>
+    <view class="empty-title">暂无投稿</view>
+    <view class="empty-sub">去创作中心发布你的第一条投稿吧</view>
+  </view>
 </view>

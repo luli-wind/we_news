@@ -82,6 +82,8 @@ public class NewsServiceImpl implements NewsService {
         }
         if (request.getCategory() != null && !request.getCategory().isBlank()) {
             wrapper.eq(News::getCategory, request.getCategory());
+        } else if (request.getExcludeCategory() != null && !request.getExcludeCategory().isBlank()) {
+            wrapper.ne(News::getCategory, request.getExcludeCategory());
         }
         if (includeAllStatus) {
             if (request.getStatus() != null && !request.getStatus().isBlank()) {
@@ -149,6 +151,11 @@ public class NewsServiceImpl implements NewsService {
             throw new BizException("news not found");
         }
         logService.operation("news", "delete", "delete news: " + id);
+    }
+
+    @Override
+    public long count() {
+        return newsMapper.selectCount(new LambdaQueryWrapper<>());
     }
 
     @Override
@@ -400,7 +407,7 @@ public class NewsServiceImpl implements NewsService {
             content.append(summary).append("\n\n");
         }
         if (sourceUrl != null && !sourceUrl.isBlank()) {
-            content.append("Original URL: ").append(sourceUrl);
+            content.append("原文链接：").append(sourceUrl);
         }
         if (content.length() == 0) {
             content.append(fallbackTitle);

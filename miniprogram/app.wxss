@@ -1,51 +1,25 @@
 page {
-  background: #f2f4f7;
-  color: #111827;
+  --red: #e24b4b;
+  --red-dark: #c53030;
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --text: #1a1a2e;
+  --text-secondary: #666;
+  --text-muted: #999;
+  --border: #eef0f3;
+  --shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  --radius: 16rpx;
+  --radius-sm: 10rpx;
+
+  background: var(--bg);
+  color: var(--text);
   font-size: 28rpx;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.container {
-  padding: 24rpx;
-  box-sizing: border-box;
-}
-
-.section-title {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #111827;
-}
-
-.card {
-  background: #ffffff;
-  border-radius: 20rpx;
-  box-shadow: 0 8rpx 24rpx rgba(18, 38, 63, 0.06);
-  padding: 24rpx;
-  box-sizing: border-box;
-}
-
-.muted {
-  color: #6b7280;
-  font-size: 24rpx;
-}
-
-.pill-btn {
-  border: none;
-  border-radius: 999rpx;
-  background: linear-gradient(120deg, #e24b4b 0%, #c83434 100%);
-  color: #ffffff;
-  font-size: 26rpx;
-  line-height: 1;
-  padding: 20rpx 30rpx;
-}
-
-.pill-btn::after {
-  border: none;
-}
-
-.empty-state {
-  text-align: center;
-  color: #9ca3af;
-  padding: 48rpx 0;
-  font-size: 26rpx;
+/* 所有 tab 页面底部留出 tab-bar 空间 */
+.tab-page {
+  padding-bottom: 120rpx;
 }

@@ -64,6 +64,21 @@ public class AuthServiceImpl implements AuthService {
                 relation.setRoleId(userRole.getId());
                 userRoleMapper.insert(relation);
             }
+        } else {
+            boolean changed = false;
+            String reqNickname = request.getNickname();
+            if (reqNickname != null && !reqNickname.isBlank() && !reqNickname.equals(user.getNickname())) {
+                user.setNickname(reqNickname);
+                changed = true;
+            }
+            String reqAvatar = request.getAvatar();
+            if (reqAvatar != null && !reqAvatar.isBlank() && !reqAvatar.equals(user.getAvatar())) {
+                user.setAvatar(reqAvatar);
+                changed = true;
+            }
+            if (changed) {
+                userMapper.updateById(user);
+            }
         }
 
         List<String> roles = roleMapper.findByUserId(user.getId()).stream().map(Role::getCode).toList();
@@ -103,6 +118,33 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    @Override
+    public UserProfileResponse updateProfile(ProfileUpdateRequest request) {
+        Long userId = SecurityUtils.currentUserId();
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BizException("用户不存在");
+        }
+        if (request.getNickname() != null && !request.getNickname().isBlank()) {
+            if (request.getNickname().length() > 32) {
+                throw new BizException("昵称不能超过32个字");
+            }
+            user.setNickname(request.getNickname().trim());
+        }
+        if (request.getAvatar() != null && !request.getAvatar().isBlank()) {
+            user.setAvatar(request.getAvatar().trim());
+        }
+        userMapper.updateById(user);
+
+        List<String> roles = roleMapper.findByUserId(userId).stream().map(Role::getCode).toList();
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .nickname(user.getNickname())
+                .avatar(user.getAvatar())
+                .roles(roles)
+                .build();
+    }
+
     private AuthTokenResponse buildToken(User user, List<String> roles) {
         String username = user.getUsername() == null ? String.valueOf(user.getId()) : user.getUsername();
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), username, roles);
@@ -113,6 +155,7 @@ public class AuthServiceImpl implements AuthService {
                 .expiresIn(jwtTokenProvider.getAccessTokenExpireSeconds())
                 .userId(user.getId())
                 .nickname(user.getNickname())
+                .avatar(user.getAvatar())
                 .roles(roles)
                 .build();
     }

@@ -1,51 +1,83 @@
 <view class="news-page">
   <view class="top-bar">
     <view class="brand-row">
-      <view class="brand-title">今日头条</view>
+      <view class="brand-title">今日资讯</view>
       <view class="search-box">
-        <text class="search-mark"></text>
-        <input class="search-input" placeholder="搜索新闻" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
+        <text class="search-icon">🔍</text>
+        <input class="search-input" placeholder="搜索新闻" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="onConfirmSearch" />
       </view>
+      <view class="refresh-btn" bindtap="onRefreshTap">🔄</view>
     </view>
 
-    <!-- <scroll-view class="tab-scroll" scroll-x="true" show-scrollbar="false">
-      <view class="tab-list">
-        <block wx:for="{{tabs}}" wx:key="index">
-          <view class="tab-item {{item.activeClass}}" data-index="{{item.index}}" bindtap="switchTab">{{item.name}}</view>
-        </block>
+    <view class="channel-tabs">
+      <view class="channel-tab {{channel === 'headline' ? 'channel-tab--active' : ''}}" data-channel="headline" bindtap="switchChannel">
+        <text>头条</text>
+        <view wx:if="{{channel === 'headline'}}" class="tab-indicator"></view>
       </view>
-    </scroll-view> -->
-  </view>
-
-  <!-- <view class="update-tip">智能推荐已更新 10 条内容</view> -->
-
-  <view wx:if="{{hero}}" class="hero-card" data-id="{{hero.id}}" bindtap="goDetail">
-    <image class="hero-image" src="{{hero.coverUrl}}" mode="aspectFill" />
-    <view class="hero-title">{{hero.title}}</view>
-    <view class="hero-meta">{{hero.sourceText}} {{hero.commentCount}}评论 {{hero.relativeTime}}</view>
-  </view>
-
-  <block wx:for="{{feed}}" wx:key="id">
-    <view class="feed-card" data-id="{{item.id}}" bindtap="goDetail">
-      <view class="feed-title">{{item.title}}</view>
-
-      <view wx:if="{{item.isSingle}}" class="single-row">
-        <view class="single-summary">{{item.summary}}</view>
-        <image class="single-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
-      </view>
-
-      <view wx:if="{{item.isTriple}}" class="triple-row">
-        <block wx:for="{{item.thumbs}}" wx:key="index">
-          <image class="triple-thumb" src="{{item}}" mode="aspectFill" />
-        </block>
-      </view>
-
-      <view class="feed-meta">
-        <text class="hot-mark">热</text>
-        <text>{{item.sourceText}} {{item.commentCount}}评论 {{item.relativeTime}}</text>
+      <view class="channel-tab {{channel === 'dynamic' ? 'channel-tab--active' : ''}}" data-channel="dynamic" bindtap="switchChannel">
+        <text>动态</text>
+        <view wx:if="{{channel === 'dynamic'}}" class="tab-indicator"></view>
       </view>
     </view>
-  </block>
+  </view>
 
-  <view wx:if="{{showEmpty && !loading}}" class="empty-block">暂无数据，试试其他关键词</view>
+  <!-- 头条频道 -->
+  <view wx:if="{{channel === 'headline'}}">
+    <block wx:for="{{headline.feed}}" wx:key="id">
+      <view class="feed-card" data-id="{{item.id}}" bindtap="goDetail">
+        <view class="feed-body">
+          <view class="feed-title">{{item.title}}</view>
+          <view class="feed-summary">{{item.summary}}</view>
+        </view>
+        <image wx:if="{{item.coverUrl}}" class="feed-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
+        <view wx:else class="feed-thumb feed-thumb--placeholder"></view>
+      </view>
+    </block>
+
+    <view wx:if="{{headline.showEmpty && !loading}}" class="empty-block">
+      <view class="empty-icon">📰</view>
+      <view class="empty-text">暂无头条新闻</view>
+      <view class="empty-sub">去动态频道看看大家的分享吧</view>
+    </view>
+
+    <view wx:if="{{headline.hasMore && headline.feed.length > 0}}" class="load-more" bindtap="loadMore">
+      <text wx:if="{{!loading}}">加载更多</text>
+      <text wx:else>加载中...</text>
+    </view>
+  </view>
+
+  <!-- 动态频道 -->
+  <view wx:if="{{channel === 'dynamic'}}">
+    <block wx:for="{{dynamic.feed}}" wx:key="id">
+      <view class="dynamic-card" data-id="{{item.id}}" bindtap="goDetail">
+        <view class="dynamic-header">
+          <view class="dynamic-avatar">{{item.sourceText.substring(0, 1)}}</view>
+          <view class="dynamic-meta">
+            <view class="dynamic-author">{{item.sourceText}}</view>
+            <view class="dynamic-time">{{item.relativeTime}}</view>
+          </view>
+        </view>
+        <view class="dynamic-title">{{item.title}}</view>
+        <view class="dynamic-summary">{{item.summary}}</view>
+        <image wx:if="{{item.coverUrl}}" class="dynamic-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+      </view>
+    </block>
+
+    <view wx:if="{{dynamic.showEmpty && !loading}}" class="empty-block">
+      <view class="empty-icon">💬</view>
+      <view class="empty-text">暂无动态</view>
+      <view class="empty-sub">去发布第一条</view>
+      <view class="empty-action" bindtap="goSubmit">前往创作中心</view>
+    </view>
+
+    <view wx:if="{{dynamic.hasMore && dynamic.feed.length > 0}}" class="load-more" bindtap="loadMore">
+      <text wx:if="{{!loading}}">加载更多</text>
+      <text wx:else>加载中...</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading && headline.feed.length === 0 && dynamic.feed.length === 0}}" class="loading-block">
+    <view class="loading-spinner"></view>
+    <view>加载中...</view>
+  </view>
 </view>

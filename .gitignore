@@ -24,3 +24,5 @@ miniprogram/project.private.config.json
 # Env
 .env
 .env.*
+
+.claude

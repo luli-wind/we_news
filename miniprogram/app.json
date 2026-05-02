@@ -3,36 +3,39 @@
     "pages/news/index",
     "pages/news/detail",
     "pages/videos/index",
+    "pages/videos/detail",
     "pages/me/index",
     "pages/submission/index",
     "pages/me/favorites/index",
     "pages/me/submissions/index",
-    "pages/me/comments/index"
+    "pages/me/comments/index",
+    "pages/login/index"
   ],
   "window": {
-    "navigationBarTitleText": "\u4eca\u65e5\u8d44\u8baf",
-    "navigationBarBackgroundColor": "#ffffff",
-    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "今日资讯",
+    "navigationBarBackgroundColor": "#e24b4b",
+    "navigationBarTextStyle": "white",
     "backgroundTextStyle": "light",
-    "backgroundColor": "#f2f4f7"
+    "backgroundColor": "#f5f6f8"
   },
   "tabBar": {
-    "color": "#6b7280",
-    "selectedColor": "#d73d3d",
+    "custom": true,
+    "color": "#999999",
+    "selectedColor": "#e24b4b",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/news/index",
-        "text": "\u9996\u9875"
+        "text": "首页"
       },
       {
         "pagePath": "pages/videos/index",
-        "text": "\u89c6\u9891"
+        "text": "视频"
       },
       {
         "pagePath": "pages/me/index",
-        "text": "\u6211\u7684"
+        "text": "我的"
       }
     ]
   },

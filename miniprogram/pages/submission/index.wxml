@@ -1,34 +1,63 @@
 <view class="submit-page">
+  <view class="submit-header">
+    <view class="submit-header-title">创作中心</view>
+    <view class="submit-header-sub">分享你的见闻，通过审核后即可在动态频道展示</view>
+  </view>
+
   <view class="editor-card">
-    <view class="editor-title">创作中心</view>
+    <!-- 错误提示 -->
+    <view wx:if="{{errorInfo}}" class="error-banner error-banner--{{errorInfo.type}}">
+      <view class="error-text">{{errorInfo.text}}</view>
+      <view wx:if="{{errorInfo.retry}}" class="error-retry" bindtap="submit">重试</view>
+      <view class="error-dismiss" bindtap="dismissError">✕</view>
+    </view>
 
-    <view class="field-label">标题</view>
-    <input class="field-input" placeholder="请输入标题" value="{{form.title}}" bindinput="onInputTitle" maxlength="60" />
-
-    <view class="field-label">内容</view>
-    <textarea class="field-textarea" placeholder="请输入正文内容..." value="{{form.content}}" bindinput="onInputContent" maxlength="3000" />
-
-    <view class="field-label">媒体</view>
-    <view class="media-wrap">
-      <view wx:if="{{!form.mediaUrl}}" class="upload-box" bindtap="chooseMedia">
-        <view class="upload-plus">+</view>
-        <view class="upload-tip">点击上传</view>
+    <view class="field-group">
+      <view class="field-label">
+        <text class="label-text">标题</text>
+        <text class="label-required">*</text>
+        <text class="label-hint">{{form.title.length || 0}}/60</text>
       </view>
+      <input class="field-input" placeholder="请输入标题（2-60字）" value="{{form.title}}" bindinput="onInputTitle" maxlength="60" />
+    </view>
 
-      <view wx:if="{{form.mediaUrl}}" class="media-box">
-        <image wx:if="{{hasImage}}" class="media-image" src="{{form.mediaUrl}}" mode="aspectFill" />
-        <video wx:if="{{hasVideo}}" class="media-video" src="{{form.mediaUrl}}" controls></video>
-        <view class="remove-media" bindtap="clearMedia">删</view>
+    <view class="field-group">
+      <view class="field-label">
+        <text class="label-text">正文</text>
+        <text class="label-required">*</text>
+        <text class="label-hint">{{form.content.length || 0}}/3000</text>
+      </view>
+      <textarea class="field-textarea" placeholder="请输入正文内容（至少10字）..." value="{{form.content}}" bindinput="onInputContent" maxlength="3000" />
+    </view>
+
+    <view class="field-group">
+      <view class="field-label">
+        <text class="label-text">图片/视频</text>
+        <text class="label-hint">可选</text>
+      </view>
+      <view class="media-wrap">
+        <view wx:if="{{!form.mediaUrl}}" class="upload-box" bindtap="chooseMedia">
+          <view class="upload-icon">📷</view>
+          <view class="upload-tip">点击上传</view>
+        </view>
+
+        <view wx:if="{{form.mediaUrl}}" class="media-box">
+          <image wx:if="{{hasImage}}" class="media-image" src="{{form.mediaUrl}}" mode="aspectFill" />
+          <video wx:if="{{hasVideo}}" class="media-video" src="{{form.mediaUrl}}" controls></video>
+          <view class="remove-media" bindtap="clearMedia">✕</view>
+        </view>
       </view>
     </view>
 
-    <view class="field-label">媒体地址（可选）</view>
-    <input class="field-input" placeholder="可粘贴媒体地址" value="{{form.mediaUrl}}" bindinput="onInputMediaUrl" />
-
-    <view wx:if="{{uploading}}" class="uploading">上传中...</view>
+    <view wx:if="{{uploading}}" class="upload-status">
+      <view class="upload-spinner"></view>
+      <text>正在上传中...</text>
+    </view>
   </view>
 
   <view class="submit-footer">
-    <button class="submit-btn" bindtap="submit">发布</button>
+    <button class="submit-btn" bindtap="submit" disabled="{{submitting || uploading}}" loading="{{submitting}}">
+      {{submitting ? '发布中...' : '立即发布'}}
+    </button>
   </view>
 </view>

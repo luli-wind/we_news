@@ -21,6 +21,7 @@ public class PostSubmission {
     private String status;
     private Long reviewerId;
     private String reviewRemark;
+    private Long publishedNewsId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

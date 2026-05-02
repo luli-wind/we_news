@@ -31,6 +31,20 @@ public class NewsController {
         return ApiResponse.success(newsService.detail(id, false));
     }
 
+    @GetMapping("/api/news/sync/refresh")
+    public ApiResponse<Map<String, Object>> refresh() {
+        long before = newsService.count();
+        var result = newsService.syncDomesticNews(null);
+        long after = newsService.count();
+        Map<String, Object> data = new java.util.LinkedHashMap<>();
+        data.put("imported", result.getImported());
+        data.put("skipped", result.getSkipped());
+        data.put("failed", result.getFailed());
+        data.put("totalBefore", before);
+        data.put("totalAfter", after);
+        return ApiResponse.success(data);
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
     @GetMapping("/api/admin/news")
     public ApiResponse<PageResponse<News>> adminPage(NewsQueryRequest request) {

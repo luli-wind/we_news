@@ -14,5 +14,6 @@ public class AuthTokenResponse {
     private Long expiresIn;
     private Long userId;
     private String nickname;
+    private String avatar;
     private List<String> roles;
 }

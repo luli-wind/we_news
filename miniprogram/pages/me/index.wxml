@@ -1,50 +1,146 @@
 <view class="me-page">
-  <view class="profile-head">
-    <view class="profile-row">
-      <view class="avatar-circle">{{avatarText}}</view>
-      <view class="user-info">
-        <view class="user-name">{{nicknameText}}</view>
-        <view class="user-role">{{roleText}}</view>
+  <!-- 已登录 -->
+  <block wx:if="{{isLoggedIn}}">
+    <view class="profile-head">
+      <view class="profile-bg"></view>
+      <view class="profile-row">
+        <view class="avatar-wrap" bindtap="changeAvatar">
+          <image wx:if="{{avatarUrl}}" class="avatar-circle-img" src="{{avatarUrl}}" mode="aspectFill" />
+          <view wx:else class="avatar-circle">{{avatarText}}</view>
+          <view class="avatar-edit-badge">📷</view>
+        </view>
+        <view class="user-info">
+          <view class="user-name-row" bindtap="changeNickname">
+            <view class="user-name">{{nicknameText}}</view>
+            <view class="name-edit-icon">✏️</view>
+          </view>
+          <view class="user-role">{{roleText}}</view>
+        </view>
       </view>
-      <view class="arrow">></view>
     </view>
-  </view>
 
-  <view class="quick-grid">
-    <view class="quick-item" bindtap="goFavorites">
-      <view class="quick-icon">收藏</view>
-      <view class="quick-title">收藏夹</view>
-      <view class="quick-num">{{favoriteCount}}</view>
+    <view class="stats-row">
+      <view class="stat-item" bindtap="goFavorites">
+        <view class="stat-num">{{favoriteCount}}</view>
+        <view class="stat-label">收藏</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item" bindtap="goSubmissions">
+        <view class="stat-num">{{submissionCount}}</view>
+        <view class="stat-label">投稿</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item" bindtap="goComments">
+        <view class="stat-num">{{commentCount}}</view>
+        <view class="stat-label">评论</view>
+      </view>
     </view>
-    <view class="quick-item" bindtap="goSubmissions">
-      <view class="quick-icon">作品</view>
-      <view class="quick-title">作品集</view>
-      <view class="quick-num">{{submissionCount}}</view>
-    </view>
-    <view class="quick-item" bindtap="goComments">
-      <view class="quick-icon">评论</view>
-      <view class="quick-title">我的评论</view>
-      <view class="quick-num">{{commentCount}}</view>
-    </view>
-  </view>
 
-  <view class="menu-card" bindtap="goSubmissionCenter">
-    <view>创作中心</view>
-    <view class="menu-arrow">></view>
-  </view>
+    <view class="menu-group">
+      <view class="menu-card menu-card--primary" bindtap="goSubmissionCenter">
+        <view class="menu-card-left">
+          <view class="menu-icon menu-icon--create">✏️</view>
+          <view class="menu-card-text">
+            <view class="menu-card-title">创作中心</view>
+            <view class="menu-card-sub">发布内容，分享你的见闻</view>
+          </view>
+        </view>
+        <view class="menu-arrow">›</view>
+      </view>
+    </view>
 
-  <view class="menu-list">
-    <view class="menu-row">
-      <view>消息通知</view>
-      <view class="menu-arrow">></view>
+    <view class="menu-group">
+      <view class="menu-row" bindtap="goFavorites">
+        <view class="menu-icon">⭐</view>
+        <view class="menu-text">我的收藏</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-row" bindtap="goComments">
+        <view class="menu-icon">💬</view>
+        <view class="menu-text">我的评论</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-row" bindtap="goSubmissions">
+        <view class="menu-icon">📋</view>
+        <view class="menu-text">我的投稿</view>
+        <view class="menu-arrow">›</view>
+      </view>
     </view>
-    <view class="menu-row">
-      <view>关于我们</view>
-      <view class="menu-arrow">></view>
+
+    <view class="menu-group">
+      <view class="menu-row">
+        <view class="menu-icon">🔔</view>
+        <view class="menu-text">消息通知</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-row">
+        <view class="menu-icon">ℹ️</view>
+        <view class="menu-text">关于我们</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-row">
+        <view class="menu-icon">⚙️</view>
+        <view class="menu-text">系统设置</view>
+        <view class="menu-arrow">›</view>
+      </view>
     </view>
-    <view class="menu-row">
-      <view>系统设置</view>
-      <view class="menu-arrow">></view>
+
+    <view class="logout-area">
+      <view class="logout-btn" bindtap="handleLogout">退出登录</view>
     </view>
-  </view>
+  </block>
+
+  <!-- 未登录 -->
+  <block wx:else>
+    <view class="profile-head profile-head--guest" bindtap="goLogin">
+      <view class="profile-bg"></view>
+      <view class="profile-row">
+        <view class="avatar-circle avatar-circle--guest">👤</view>
+        <view class="user-info">
+          <view class="user-name">点击登录</view>
+          <view class="user-role">登录后享受完整功能</view>
+        </view>
+        <view class="login-arrow">›</view>
+      </view>
+    </view>
+
+    <view class="stats-row">
+      <view class="stat-item">
+        <view class="stat-num stat-num--muted">-</view>
+        <view class="stat-label">收藏</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-num stat-num--muted">-</view>
+        <view class="stat-label">投稿</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-num stat-num--muted">-</view>
+        <view class="stat-label">评论</view>
+      </view>
+    </view>
+
+    <view class="guest-tip">
+      <view class="guest-tip-text">登录后可收藏新闻、发表评论、发布原创内容</view>
+    </view>
+
+    <view class="menu-group">
+      <view class="menu-row">
+        <view class="menu-icon">🔔</view>
+        <view class="menu-text">消息通知</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-row">
+        <view class="menu-icon">ℹ️</view>
+        <view class="menu-text">关于我们</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-row">
+        <view class="menu-icon">⚙️</view>
+        <view class="menu-text">系统设置</view>
+        <view class="menu-arrow">›</view>
+      </view>
+    </view>
+  </block>
 </view>

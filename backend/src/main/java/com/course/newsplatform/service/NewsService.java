@@ -20,4 +20,6 @@ public interface NewsService {
     void delete(Long id);
 
     NewsSyncResult syncDomesticNews(NewsSyncRequest request);
+
+    long count();
 }

@@ -77,6 +77,11 @@ public class SubmissionServiceImpl implements SubmissionService {
             throw new BizException("审核状态非法");
         }
 
+        if (status == SubmissionStatus.REJECTED
+                && (request.getReviewRemark() == null || request.getReviewRemark().isBlank())) {
+            throw new BizException("驳回时必须填写驳回原因");
+        }
+
         submission.setStatus(status.name());
         submission.setReviewerId(SecurityUtils.currentUserId());
         submission.setReviewRemark(request.getReviewRemark());
@@ -95,6 +100,9 @@ public class SubmissionServiceImpl implements SubmissionService {
             news.setAuthorId(submission.getUserId());
             news.setPublishedAt(LocalDateTime.now());
             newsMapper.insert(news);
+
+            submission.setPublishedNewsId(news.getId());
+            postSubmissionMapper.updateById(submission);
         }
 
         logService.operation("submission", "audit", "审核投稿 " + id + " => " + status.name());

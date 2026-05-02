@@ -1,32 +1,28 @@
 <view class="detail-page">
-  <view class="article-wrap">
-    <view class="article-title">{{detail.title}}</view>
+  <view class="video-wrap">
+    <video
+      class="video-player"
+      src="{{detail.url}}"
+      poster="{{detail.coverUrl}}"
+      controls
+      autoplay
+      object-fit="contain"
+    ></video>
+  </view>
 
-    <view class="author-row">
-      <view class="author-avatar">{{authorName.substring(0, 1)}}</view>
-      <view class="author-info">
-        <view class="author-name">{{authorName}}</view>
-        <view class="author-time">{{publishTimeText}}</view>
-      </view>
+  <view class="info-card">
+    <view class="video-title">{{detail.title}}</view>
+
+    <view class="video-meta">
+      <view class="meta-item">{{detail.category || '视频'}}</view>
+      <view class="meta-divider">·</view>
+      <view class="meta-item">{{publishTimeText}}</view>
     </view>
 
-    <block wx:for="{{paragraphs}}" wx:key="index">
-      <view class="paragraph">{{item}}</view>
-    </block>
-
-    <view class="tag-row">
-      <text class="tag-item">{{detail.category || '新闻'}}</text>
-    </view>
-
-    <view class="action-row">
-      <view class="action-item action-item--like">
-        <text class="action-icon">❤️</text>
-        <text>点赞</text>
-      </view>
-      <view class="action-item" bindtap="toggleFavorite">
-        <text class="action-icon">{{favorited ? '⭐' : '☆'}}</text>
-        <text>{{favoriteButtonText}}</text>
-      </view>
+    <view wx:if="{{descriptionLines.length > 0}}" class="video-desc">
+      <block wx:for="{{descriptionLines}}" wx:key="index">
+        <view class="desc-line">{{item}}</view>
+      </block>
     </view>
   </view>
 
@@ -38,9 +34,6 @@
         <view class="comment-top">
           <view class="comment-avatar">{{item.displayName.substring(0, 1)}}</view>
           <view class="comment-user">{{item.displayName}}</view>
-        </view>
-        <view wx:if="{{item.isReply}}" class="reply-indicator">
-          <text class="reply-to">回复 {{item.parentId}}</text>
         </view>
         <view class="comment-content">{{item.content}}</view>
         <view class="comment-bottom">

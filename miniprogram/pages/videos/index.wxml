@@ -1,39 +1,45 @@
 <view class="video-page">
   <view class="video-head">
-    <view class="url-bar">
-      <text class="url-prefix">搜</text>
-      <input class="url-input" placeholder="搜索视频" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
+    <view class="video-title">视频中心</view>
+    <view class="search-bar">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索视频" value="{{keyword}}" bindinput="onKeywordInput" confirm-type="search" bindconfirm="search" />
     </view>
   </view>
 
-  <view wx:if="{{featured}}" class="featured-card">
-    <video class="featured-player" src="{{featured.url}}" poster="{{featured.coverUrl}}" controls></video>
+  <!-- 精选视频 -->
+  <view wx:if="{{featured}}" class="featured-card" bindtap="goFeaturedDetail">
+    <video class="featured-player" src="{{featured.url}}" poster="{{featured.coverUrl}}" controls object-fit="contain"></video>
     <view class="featured-title">{{featured.title}}</view>
-    <view class="featured-meta">原创 | {{featured.playCount}}</view>
+    <view class="featured-meta">{{featured.authorText}} · {{featured.playCount}}</view>
 
-    <view class="op-row">
-      <view class="op-btn">点赞 311</view>
-      <view class="op-btn">点踩 54</view>
+    <view class="action-row">
+      <view class="action-btn">👍 点赞</view>
+      <view class="action-btn">⭐ 收藏</view>
+      <view class="action-btn">↗ 分享</view>
     </view>
 
     <view class="author-row">
-      <view class="author-dot"></view>
+      <view class="author-avatar">{{featured.authorText.substring(0, 1)}}</view>
       <view class="author-name">{{featured.authorText}}</view>
     </view>
   </view>
 
+  <!-- 推荐视频 -->
+  <view wx:if="{{list.length > 0}}" class="section-header">
+    <view class="section-dot"></view>
+    <view class="section-title">推荐视频</view>
+  </view>
+
   <block wx:for="{{list}}" wx:key="id">
-    <view class="video-item">
-      <view class="video-item-main">
-        <view class="video-item-title">{{item.title}}</view>
-        <view class="video-item-meta">{{item.authorText}} {{item.playCount}}</view>
+    <view class="video-card" data-id="{{item.id}}" bindtap="goDetail">
+      <image class="video-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
+      <view class="video-info">
+        <view class="video-card-title">{{item.title}}</view>
+        <view class="video-card-meta">{{item.authorText}} · {{item.playCount}}</view>
       </view>
-      <image class="video-item-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
     </view>
   </block>
 
-  <view class="foot-input">
-    <view class="comment-input">写评论...</view>
-    <view class="foot-icons">评论 收藏 点赞</view>
-  </view>
+  <view wx:if="{{!featured && !list.length && !loading}}" class="empty-state">暂无视频内容</view>
 </view>

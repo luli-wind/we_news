@@ -11,4 +11,6 @@ public interface AuthService {
     AuthTokenResponse refreshToken(RefreshTokenRequest request);
 
     UserProfileResponse profile();
+
+    UserProfileResponse updateProfile(ProfileUpdateRequest request);
 }
