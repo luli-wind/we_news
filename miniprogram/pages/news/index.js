@@ -70,6 +70,10 @@ Page({
     this.loadFeed()
   },
 
+  onReachBottom() {
+    this.loadMore()
+  },
+
   async loadFeed() {
     const channel = this.data.channel
     const state = this.data[channel]

@@ -18,4 +18,6 @@ public interface AdminService {
     void assignRole(UserRoleAssignRequest request);
 
     PageResponse<OperationLog> operationLogs(PageQuery query);
+
+    java.util.Map<String, Object> dashboard();
 }

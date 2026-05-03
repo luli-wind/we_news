@@ -41,6 +41,7 @@ Page({
     detail: {},
     authorName: '新闻中心',
     paragraphs: [],
+    mediaImages: [],
     comments: [],
     commentCount: 0,
     commentText: '',
@@ -66,10 +67,17 @@ Page({
     try {
       const detail = await request(`/api/news/${this.data.id}`)
       const authorName = (detail && (detail.sourceName || detail.category)) || '新闻中心'
+      const mediaImages = (detail && Array.isArray(detail.media)
+        ? detail.media.filter(m => m.mediaType === 'IMAGE')
+        : [])
+      if (!detail.coverUrl && mediaImages.length > 0) {
+        detail.coverUrl = mediaImages[0].url
+      }
       this.setData({
         detail: detail || {},
         authorName,
         paragraphs: toParagraphs(detail && detail.content),
+        mediaImages,
         publishTimeText: toRelativeTime(detail && (detail.publishedAt || detail.createdAt))
       })
     } catch (error) {
@@ -190,5 +198,22 @@ Page({
         }
       }
     })
+  },
+
+  previewImage(e) {
+    const url = e.currentTarget.dataset.url
+    const urls = this.data.mediaImages.map(m => m.url)
+    wx.previewImage({ current: url, urls })
+  },
+
+  onCoverError() {
+    this.setData({ 'detail.coverUrl': '' })
+  },
+
+  onImageError(e) {
+    const idx = e.currentTarget.dataset.index
+    if (idx !== undefined) {
+      this.setData({ [`mediaImages[${idx}].url`]: '' })
+    }
   }
 })

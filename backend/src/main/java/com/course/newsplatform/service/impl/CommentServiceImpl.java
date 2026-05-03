@@ -9,9 +9,13 @@ import com.course.newsplatform.dto.CommentCreateRequest;
 import com.course.newsplatform.dto.CommentView;
 import com.course.newsplatform.dto.PageQuery;
 import com.course.newsplatform.entity.Comment;
+import com.course.newsplatform.entity.News;
 import com.course.newsplatform.entity.User;
+import com.course.newsplatform.entity.Video;
 import com.course.newsplatform.mapper.CommentMapper;
+import com.course.newsplatform.mapper.NewsMapper;
 import com.course.newsplatform.mapper.UserMapper;
+import com.course.newsplatform.mapper.VideoMapper;
 import com.course.newsplatform.service.CommentService;
 import com.course.newsplatform.service.LogService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,8 @@ public class CommentServiceImpl implements CommentService {
 
     private final CommentMapper commentMapper;
     private final UserMapper userMapper;
+    private final NewsMapper newsMapper;
+    private final VideoMapper videoMapper;
     private final LogService logService;
 
     @Override
@@ -156,5 +162,58 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public Comment getById(Long id) {
         return commentMapper.selectById(id);
+    }
+
+    @Override
+    public PageResponse<CommentView> adminListAll(String bizType, int pageNum, int pageSize) {
+        LambdaQueryWrapper<Comment> wrapper = new LambdaQueryWrapper<Comment>()
+                .eq(Comment::getIsDeleted, 0)
+                .orderByDesc(Comment::getCreatedAt);
+        if (bizType != null && !bizType.isBlank()) {
+            wrapper.eq(Comment::getBizType, bizType.toUpperCase(Locale.ROOT));
+        }
+
+        Page<Comment> page = commentMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+
+        Set<Long> userIds = page.getRecords().stream().map(Comment::getUserId).collect(Collectors.toSet());
+        Map<Long, User> userMap = userMapper.selectList(new LambdaQueryWrapper<User>().in(User::getId, userIds))
+                .stream().collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<String, Map<Long, String>> titleCache = new HashMap<>();
+        for (Comment c : page.getRecords()) {
+            titleCache.computeIfAbsent(c.getBizType(), k -> new HashMap<>());
+        }
+        for (String type : titleCache.keySet()) {
+            Set<Long> bizIds = page.getRecords().stream()
+                    .filter(c -> type.equals(c.getBizType()))
+                    .map(Comment::getBizId).collect(Collectors.toSet());
+            if ("NEWS".equals(type)) {
+                newsMapper.selectList(new LambdaQueryWrapper<News>().in(News::getId, bizIds))
+                        .forEach(n -> titleCache.get(type).put(n.getId(), n.getTitle()));
+            } else if ("VIDEO".equals(type)) {
+                videoMapper.selectList(new LambdaQueryWrapper<Video>().in(Video::getId, bizIds))
+                        .forEach(v -> titleCache.get(type).put(v.getId(), v.getTitle()));
+            }
+        }
+
+        List<CommentView> list = page.getRecords().stream().map(c -> {
+            CommentView view = new CommentView();
+            view.setId(c.getId());
+            view.setBizType(c.getBizType());
+            view.setBizId(c.getBizId());
+            view.setUserId(c.getUserId());
+            User user = userMap.get(c.getUserId());
+            view.setUserNickname(user == null ? "匿名用户" : user.getNickname());
+            view.setUserAvatar(user == null ? null : user.getAvatar());
+            view.setParentId(c.getParentId());
+            view.setRootId(c.getRootId());
+            view.setContent(c.getContent());
+            view.setCreatedAt(c.getCreatedAt());
+            Map<Long, String> typeTitles = titleCache.getOrDefault(c.getBizType(), Collections.emptyMap());
+            view.setBizTitle(typeTitles.getOrDefault(c.getBizId(), c.getBizType() + "#" + c.getBizId()));
+            return view;
+        }).toList();
+
+        return PageResponse.of(page.getCurrent(), page.getSize(), page.getTotal(), list);
     }
 }

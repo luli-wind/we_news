@@ -15,9 +15,20 @@
           <el-option label="已驳回" value="REJECTED" />
         </el-select>
         <el-button type="primary" @click="load">查询</el-button>
+        <el-button
+          v-if="selectedIds.length > 0"
+          type="success"
+          @click="batchApprove"
+        >批量通过 ({{ selectedIds.length }})</el-button>
+        <el-button
+          v-if="selectedIds.length > 0"
+          type="danger"
+          @click="batchRejectOpen"
+        >批量驳回 ({{ selectedIds.length }})</el-button>
       </div>
 
-      <el-table :data="list" border>
+      <el-table :data="list" border @selection-change="onSelectionChange">
+        <el-table-column type="selection" width="50" />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" min-width="220" />
         <el-table-column prop="status" label="状态" width="100">
@@ -99,6 +110,29 @@ const list = ref([])
 
 const rejectVisible = ref(false)
 const rejectForm = reactive({ id: null, reviewRemark: '' })
+const selectedIds = ref([])
+
+const onSelectionChange = (rows) => {
+  selectedIds.value = rows.map(r => r.id)
+}
+
+const batchApprove = async () => {
+  try {
+    await Promise.all(selectedIds.value.map(id => auditSubmission(id, { status: 'APPROVED', reviewRemark: '' })))
+    ElMessage.success(`已通过 ${selectedIds.value.length} 条投稿`)
+    selectedIds.value = []
+    load()
+  } catch (e) {
+    ElMessage.error('批量操作部分失败')
+  }
+}
+
+const batchRejectOpen = () => {
+  rejectForm.id = null
+  rejectForm.reviewRemark = ''
+  rejectForm.batchIds = [...selectedIds.value]
+  rejectVisible.value = true
+}
 
 const statusType = (status) => {
   if (status === 'APPROVED') return 'success'
@@ -140,6 +174,7 @@ const approve = async (id) => {
 
 const openReject = (id) => {
   rejectForm.id = id
+  rejectForm.batchIds = []
   rejectForm.reviewRemark = ''
   rejectVisible.value = true
 }
@@ -149,12 +184,18 @@ const doReject = async () => {
     ElMessage.warning('请填写驳回原因')
     return
   }
-  await auditSubmission(rejectForm.id, {
-    status: 'REJECTED',
-    reviewRemark: rejectForm.reviewRemark.trim()
-  })
-  ElMessage.success('已驳回该投稿')
+  const ids = rejectForm.batchIds.length > 0 ? rejectForm.batchIds : [rejectForm.id]
+  try {
+    await Promise.all(ids.map(id => auditSubmission(id, {
+      status: 'REJECTED',
+      reviewRemark: rejectForm.reviewRemark.trim()
+    })))
+    ElMessage.success(`已驳回 ${ids.length} 条投稿`)
+  } catch (e) {
+    ElMessage.error('驳回操作失败')
+  }
   rejectVisible.value = false
+  selectedIds.value = []
   load()
 }
 

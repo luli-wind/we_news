@@ -23,13 +23,23 @@
 
   <!-- 头条频道 -->
   <view wx:if="{{channel === 'headline'}}">
+    <block wx:if="{{loading && headline.feed.length === 0}}">
+      <view class="skeleton-card" wx:for="{{[1,2,3,4,5]}}" wx:key="*this">
+        <view class="skeleton-body">
+          <view class="skeleton-line skeleton-line--long"></view>
+          <view class="skeleton-line skeleton-line--short"></view>
+        </view>
+        <view class="skeleton-thumb"></view>
+      </view>
+    </block>
+
     <block wx:for="{{headline.feed}}" wx:key="id">
       <view class="feed-card" data-id="{{item.id}}" bindtap="goDetail">
         <view class="feed-body">
           <view class="feed-title">{{item.title}}</view>
           <view class="feed-summary">{{item.summary}}</view>
         </view>
-        <image wx:if="{{item.coverUrl}}" class="feed-thumb" src="{{item.coverUrl}}" mode="aspectFill" />
+        <image wx:if="{{item.coverUrl}}" class="feed-thumb" src="{{item.coverUrl}}" mode="aspectFill" lazy-load binderror="onCoverError" data-index="{{index}}" data-channel="headline" />
         <view wx:else class="feed-thumb feed-thumb--placeholder"></view>
       </view>
     </block>
@@ -40,14 +50,26 @@
       <view class="empty-sub">去动态频道看看大家的分享吧</view>
     </view>
 
-    <view wx:if="{{headline.hasMore && headline.feed.length > 0}}" class="load-more" bindtap="loadMore">
-      <text wx:if="{{!loading}}">加载更多</text>
-      <text wx:else>加载中...</text>
+    <view wx:if="{{loading && headline.feed.length > 0}}" class="load-more">
+      <text>加载中...</text>
+    </view>
+    <view wx:elif="{{headline.hasMore && headline.feed.length > 0}}" class="load-more" bindtap="loadMore">
+      <text>加载更多</text>
     </view>
   </view>
 
   <!-- 动态频道 -->
   <view wx:if="{{channel === 'dynamic'}}">
+    <block wx:if="{{loading && dynamic.feed.length === 0}}">
+      <view class="skeleton-card" wx:for="{{[1,2,3,4,5]}}" wx:key="*this">
+        <view class="skeleton-body">
+          <view class="skeleton-line skeleton-line--long"></view>
+          <view class="skeleton-line skeleton-line--short"></view>
+        </view>
+        <view class="skeleton-thumb"></view>
+      </view>
+    </block>
+
     <block wx:for="{{dynamic.feed}}" wx:key="id">
       <view class="dynamic-card" data-id="{{item.id}}" bindtap="goDetail">
         <view class="dynamic-header">
@@ -59,7 +81,7 @@
         </view>
         <view class="dynamic-title">{{item.title}}</view>
         <view class="dynamic-summary">{{item.summary}}</view>
-        <image wx:if="{{item.coverUrl}}" class="dynamic-cover" src="{{item.coverUrl}}" mode="aspectFill" />
+        <image wx:if="{{item.coverUrl}}" class="dynamic-cover" src="{{item.coverUrl}}" mode="aspectFill" lazy-load />
       </view>
     </block>
 
@@ -70,14 +92,11 @@
       <view class="empty-action" bindtap="goSubmit">前往创作中心</view>
     </view>
 
-    <view wx:if="{{dynamic.hasMore && dynamic.feed.length > 0}}" class="load-more" bindtap="loadMore">
-      <text wx:if="{{!loading}}">加载更多</text>
-      <text wx:else>加载中...</text>
+    <view wx:if="{{loading && dynamic.feed.length > 0}}" class="load-more">
+      <text>加载中...</text>
     </view>
-  </view>
-
-  <view wx:if="{{loading && headline.feed.length === 0 && dynamic.feed.length === 0}}" class="loading-block">
-    <view class="loading-spinner"></view>
-    <view>加载中...</view>
+    <view wx:elif="{{dynamic.hasMore && dynamic.feed.length > 0}}" class="load-more" bindtap="loadMore">
+      <text>加载更多</text>
+    </view>
   </view>
 </view>

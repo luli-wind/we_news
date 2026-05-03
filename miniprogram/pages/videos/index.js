@@ -3,9 +3,10 @@ const { request } = require('../../utils/request')
 const fallbackCover = 'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=60'
 
 function formatPlayCount(count) {
-  if (count >= 10000) return `${(count / 10000).toFixed(1)}万次播放`
-  if (count >= 1000) return `${(count / 1000).toFixed(0)}千次播放`
-  return `${count || 0}次播放`
+  const n = Number(count) || 0
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}万次播放`
+  if (n >= 1000) return `${(n / 1000).toFixed(0)}千次播放`
+  return `${n}次播放`
 }
 
 Page({
@@ -39,14 +40,15 @@ Page({
         pageSize: 20,
         keyword: this.data.keyword
       })
-      const list = data && Array.isArray(data.list) ? data.list.map((item, idx) => ({
+      const list = data && Array.isArray(data.list) ? data.list.map((item) => ({
         id: item.id,
         title: item.title || '未命名视频',
         description: item.description || '暂无描述',
         url: item.url,
         coverUrl: item.coverUrl || fallbackCover,
         authorText: item.category || '创作者',
-        playCount: formatPlayCount((idx + 8) * 1200)
+        playCount: formatPlayCount(item.playCount),
+        playCountRaw: item.playCount || 0
       })) : []
 
       this.setData({

@@ -102,6 +102,16 @@ public class VideoServiceImpl implements VideoService {
         logService.operation("video", "delete", "删除视频: " + id);
     }
 
+    @Override
+    public void incrementPlayCount(Long id) {
+        Video video = videoMapper.selectById(id);
+        if (video == null) {
+            throw new BizException("视频不存在");
+        }
+        video.setPlayCount((video.getPlayCount() != null ? video.getPlayCount() : 0) + 1);
+        videoMapper.updateById(video);
+    }
+
     private String normalizeStatus(String status) {
         if (status == null || status.isBlank()) {
             return ContentStatus.DRAFT.name();

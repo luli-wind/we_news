@@ -16,4 +16,6 @@ public interface VideoService {
     void update(Long id, VideoSaveRequest request);
 
     void delete(Long id);
+
+    void incrementPlayCount(Long id);
 }

@@ -12,8 +12,10 @@ import com.course.newsplatform.dto.NewsSyncFeedDetail;
 import com.course.newsplatform.dto.NewsSyncRequest;
 import com.course.newsplatform.dto.NewsSyncResult;
 import com.course.newsplatform.entity.News;
+import com.course.newsplatform.entity.NewsMedia;
 import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.mapper.NewsMapper;
+import com.course.newsplatform.mapper.NewsMediaMapper;
 import com.course.newsplatform.service.LogService;
 import com.course.newsplatform.service.NewsService;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +74,7 @@ public class NewsServiceImpl implements NewsService {
     private volatile Boolean schemaSupportsSourceFields;
 
     private final NewsMapper newsMapper;
+    private final NewsMediaMapper newsMediaMapper;
     private final LogService logService;
 
     @Override
@@ -107,6 +110,11 @@ public class NewsServiceImpl implements NewsService {
         if (!includeUnpublished && !ContentStatus.PUBLISHED.name().equals(news.getStatus())) {
             throw new BizException("news is not published");
         }
+        List<NewsMedia> media = newsMediaMapper.selectList(
+                new LambdaQueryWrapper<NewsMedia>()
+                        .eq(NewsMedia::getNewsId, id)
+                        .orderByAsc(NewsMedia::getSortOrder));
+        news.setMedia(media);
         return news;
     }
 
@@ -295,7 +303,6 @@ public class NewsServiceImpl implements NewsService {
         if (supportsSourceFields) {
             exists = newsMapper.selectCount(new LambdaQueryWrapper<News>().eq(News::getOriginHash, originHash));
         } else {
-            // Legacy schema fallback: use title + publishedAt dedup.
             exists = newsMapper.selectCount(new LambdaQueryWrapper<News>()
                     .eq(News::getTitle, title)
                     .eq(News::getPublishedAt, publishedAt));
@@ -304,12 +311,18 @@ public class NewsServiceImpl implements NewsService {
             return SyncOutcome.SKIPPED;
         }
 
+        String coverUrl = blankToNull(item.coverUrl());
+        List<String> imageUrls = extractImageUrls(item.description());
+        if (coverUrl == null && !imageUrls.isEmpty()) {
+            coverUrl = imageUrls.get(0);
+        }
+
         News news = new News();
         news.setTitle(title);
         news.setSummary(summary);
         news.setContent(buildContent(summary, sourceUrl, title));
         news.setCategory(category);
-        news.setCoverUrl(blankToNull(item.coverUrl()));
+        news.setCoverUrl(coverUrl);
         if (supportsSourceFields) {
             news.setSourceName(feed.sourceName());
             news.setSourceUrl(sourceUrl);
@@ -319,6 +332,18 @@ public class NewsServiceImpl implements NewsService {
         news.setPublishedAt(publishedAt);
 
         newsMapper.insert(news);
+
+        if (!imageUrls.isEmpty()) {
+            for (int i = 0; i < imageUrls.size(); i++) {
+                NewsMedia media = new NewsMedia();
+                media.setNewsId(news.getId());
+                media.setMediaType("IMAGE");
+                media.setUrl(imageUrls.get(i));
+                media.setSortOrder(i);
+                newsMediaMapper.insert(media);
+            }
+        }
+
         return SyncOutcome.IMPORTED;
     }
 
@@ -373,6 +398,21 @@ public class NewsServiceImpl implements NewsService {
             return "";
         }
         return Objects.toString(nodes.item(0).getTextContent(), "").trim();
+    }
+
+    private List<String> extractImageUrls(String html) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        List<String> urls = new ArrayList<>();
+        Matcher matcher = IMG_SRC_PATTERN.matcher(html);
+        while (matcher.find()) {
+            String url = matcher.group(1).trim();
+            if (!url.isBlank()) {
+                urls.add(HtmlUtils.htmlUnescape(url));
+            }
+        }
+        return urls;
     }
 
     private String extractCoverUrl(Element itemElement) {

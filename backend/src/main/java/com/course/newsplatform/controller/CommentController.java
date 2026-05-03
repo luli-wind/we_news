@@ -38,6 +38,15 @@ public class CommentController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    @GetMapping("/admin/all")
+    public ApiResponse<PageResponse<CommentView>> adminAll(
+            @RequestParam(required = false) String bizType,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        return ApiResponse.success(commentService.adminListAll(bizType, page, pageSize));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
     @DeleteMapping("/admin/{id}")
     public ApiResponse<Void> auditDelete(@PathVariable Long id) {
         commentService.auditDelete(id);

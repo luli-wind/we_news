@@ -54,4 +54,10 @@ public class VideoController {
         videoService.delete(id);
         return ApiResponse.success();
     }
+
+    @PostMapping("/api/videos/{id}/view")
+    public ApiResponse<Void> view(@PathVariable Long id) {
+        videoService.incrementPlayCount(id);
+        return ApiResponse.success();
+    }
 }

@@ -14,6 +14,7 @@ export const updateVideo = (id, data) => request.put(`/api/videos/${id}`, data)
 export const deleteVideo = (id) => request.delete(`/api/videos/${id}`)
 
 export const fetchComments = (params) => request.get('/api/comments', { params })
+export const fetchAllComments = (params) => request.get('/api/comments/admin/all', { params })
 export const deleteComment = (id) => request.delete(`/api/comments/admin/${id}`)
 
 export const fetchSubmissions = (params) => request.get('/api/submissions/admin', { params })
@@ -24,3 +25,12 @@ export const fetchRoles = () => request.get('/api/admin/roles')
 export const assignUserRole = (data) => request.post('/api/admin/users/assign-role', data)
 
 export const fetchOperationLogs = (params) => request.get('/api/admin/logs/operations', { params })
+
+export const fetchDashboard = () => request.get('/api/admin/dashboard')
+
+export const uploadFile = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post('/api/files/upload', formData)
+}
+

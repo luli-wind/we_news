@@ -15,6 +15,7 @@ public class CommentView {
     private Long userId;
     private String userNickname;
     private String userAvatar;
+    private String bizTitle;
     private Long parentId;
     private Long rootId;
     private String content;

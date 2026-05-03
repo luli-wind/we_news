@@ -23,4 +23,5 @@ public class Video {
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long playCount;
 }

@@ -55,7 +55,15 @@
         <el-form-item label="摘要"><el-input v-model="form.summary" /></el-form-item>
         <el-form-item label="内容"><el-input v-model="form.content" type="textarea" :rows="8" /></el-form-item>
         <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
-        <el-form-item label="封面地址"><el-input v-model="form.coverUrl" /></el-form-item>
+        <el-form-item label="封面地址">
+          <div style="display:flex;gap:8px;width:100%">
+            <el-input v-model="form.coverUrl" style="flex:1" />
+            <el-upload :before-upload="handleCoverUpload" :show-file-list="false" accept="image/*">
+              <el-button type="primary">上传</el-button>
+            </el-upload>
+          </div>
+          <img v-if="form.coverUrl" :src="form.coverUrl" style="margin-top:8px;max-width:200px;max-height:120px;border-radius:8px" />
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" style="width: 170px">
             <el-option label="草稿" value="DRAFT" />
@@ -75,7 +83,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews } from '../api/modules'
+import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews, uploadFile } from '../api/modules'
 
 const query = reactive({ page: 1, pageSize: 10, keyword: '', status: '' })
 const total = ref(0)
@@ -149,6 +157,19 @@ const syncNews = async () => {
   } finally {
     syncing.value = false
   }
+}
+
+const handleCoverUpload = async (file) => {
+  try {
+    const data = await uploadFile(file)
+    if (data && data.url) {
+      form.coverUrl = data.url
+      ElMessage.success('封面上传成功')
+    }
+  } catch (e) {
+    ElMessage.error((e && e.message) || '上传失败')
+  }
+  return false
 }
 
 onMounted(load)

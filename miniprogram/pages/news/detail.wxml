@@ -10,8 +10,14 @@
       </view>
     </view>
 
+    <image wx:if="{{detail.coverUrl}}" class="cover-image" src="{{detail.coverUrl}}" mode="widthFix" lazy-load data-url="{{detail.coverUrl}}" bindtap="previewImage" binderror="onCoverError" />
+
     <block wx:for="{{paragraphs}}" wx:key="index">
       <view class="paragraph">{{item}}</view>
+    </block>
+
+    <block wx:for="{{mediaImages}}" wx:key="id">
+      <image wx:if="{{index > 0 || !detail.coverUrl || item.url !== detail.coverUrl}}" class="content-image" src="{{item.url}}" mode="widthFix" lazy-load data-url="{{item.url}}" bindtap="previewImage" binderror="onImageError" data-index="{{index}}" />
     </block>
 
     <view class="tag-row">

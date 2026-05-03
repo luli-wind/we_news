@@ -2,15 +2,22 @@ package com.course.newsplatform.config;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.course.newsplatform.entity.News;
+import com.course.newsplatform.entity.Role;
+import com.course.newsplatform.entity.User;
+import com.course.newsplatform.entity.UserRole;
 import com.course.newsplatform.entity.Video;
 import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.mapper.NewsMapper;
+import com.course.newsplatform.mapper.RoleMapper;
+import com.course.newsplatform.mapper.UserMapper;
+import com.course.newsplatform.mapper.UserRoleMapper;
 import com.course.newsplatform.mapper.VideoMapper;
 import com.course.newsplatform.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -23,18 +30,61 @@ public class DataInitializer implements ApplicationRunner {
     private final NewsService newsService;
     private final NewsMapper newsMapper;
     private final VideoMapper videoMapper;
+    private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
+    private final UserRoleMapper userRoleMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(ApplicationArguments args) {
         new Thread(() -> {
             try {
                 Thread.sleep(3000);
+                initRoles();
+                initAdminUser();
                 initNews();
                 initVideos();
             } catch (Exception e) {
                 log.warn("数据初始化异常: {}", e.getMessage());
             }
         }, "data-init").start();
+    }
+
+    private void initRoles() {
+        long count = roleMapper.selectCount(new LambdaQueryWrapper<>());
+        if (count > 0) return;
+        log.info("角色表为空，初始化默认角色...");
+        Role admin = new Role(); admin.setName("管理员"); admin.setCode("ADMIN"); admin.setDescription("系统管理员");
+        Role editor = new Role(); editor.setName("编辑"); editor.setCode("EDITOR"); editor.setDescription("内容编辑");
+        Role user = new Role(); user.setName("普通用户"); user.setCode("USER"); user.setDescription("小程序普通用户");
+        roleMapper.insert(admin);
+        roleMapper.insert(editor);
+        roleMapper.insert(user);
+        log.info("已初始化 3 个默认角色");
+    }
+
+    private void initAdminUser() {
+        User existingAdmin = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, "admin"));
+        if (existingAdmin != null) {
+            log.info("管理员账号已存在，跳过初始化");
+            return;
+        }
+        log.info("创建默认管理员账号: admin / Admin@123");
+        User admin = new User();
+        admin.setUsername("admin");
+        admin.setPassword(passwordEncoder.encode("Admin@123"));
+        admin.setNickname("系统管理员");
+        admin.setEnabled(1);
+        userMapper.insert(admin);
+
+        Role adminRole = roleMapper.selectOne(new LambdaQueryWrapper<Role>().eq(Role::getCode, "ADMIN"));
+        if (adminRole != null) {
+            UserRole relation = new UserRole();
+            relation.setUserId(admin.getId());
+            relation.setRoleId(adminRole.getId());
+            userRoleMapper.insert(relation);
+        }
+        log.info("默认管理员账号创建完成");
     }
 
     private void initNews() {

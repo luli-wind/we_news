@@ -1,5 +1,12 @@
 const { request } = require('../../utils/request')
 
+function formatPlayCount(count) {
+  const n = Number(count) || 0
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}万次播放`
+  if (n >= 1000) return `${(n / 1000).toFixed(0)}千次播放`
+  return `${n}次播放`
+}
+
 function toRelativeTime(source) {
   if (!source) return '刚刚'
   const date = new Date(source)
@@ -31,6 +38,8 @@ Page({
     detail: {},
     descriptionLines: [],
     publishTimeText: '',
+    playCountText: '',
+    hasViewed: false,
     comments: [],
     commentCount: 0,
     commentText: '',
@@ -55,7 +64,8 @@ Page({
         descriptionLines: detail && detail.description
           ? String(detail.description).split(/\n+/).filter(Boolean)
           : [],
-        publishTimeText: toRelativeTime(detail && (detail.publishedAt || detail.createdAt))
+        publishTimeText: toRelativeTime(detail && (detail.publishedAt || detail.createdAt)),
+        playCountText: formatPlayCount(detail && detail.playCount)
       })
     } catch (error) {
       wx.showToast({ title: '视频加载失败', icon: 'none' })
@@ -138,5 +148,11 @@ Page({
         }
       }
     })
+  },
+
+  onPlay() {
+    if (this.data.hasViewed) return
+    this.setData({ hasViewed: true })
+    request(`/api/videos/${this.data.id}/view`, 'POST').catch(() => {})
   }
 })

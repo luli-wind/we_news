@@ -21,4 +21,6 @@ public interface CommentService {
     void auditDelete(Long id);
 
     Comment getById(Long id);
+
+    PageResponse<CommentView> adminListAll(String bizType, int page, int pageSize);
 }
