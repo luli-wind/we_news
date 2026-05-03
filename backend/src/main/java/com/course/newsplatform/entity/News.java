@@ -31,4 +31,7 @@ public class News {
 
     @TableField(exist = false)
     private List<NewsMedia> media;
+
+    @TableField(exist = false)
+    private String authorName;
 }

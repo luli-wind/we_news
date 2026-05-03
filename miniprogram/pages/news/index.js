@@ -89,14 +89,17 @@ Page({
       }
 
       const data = await request('/api/news', 'GET', params)
+      const isDynamic = channel === CHANNEL_DYNAMIC
       const list = (data && Array.isArray(data.list) ? data.list : []).map((item, idx) => ({
         id: item.id,
         title: item.title || '未命名新闻',
         summary: item.summary || '暂无摘要',
         categoryText: item.category || '推荐',
-        coverUrl: item.coverUrl || fallbackCovers[idx % fallbackCovers.length],
+        coverUrl: isDynamic ? (item.coverUrl || '') : (item.coverUrl || fallbackCovers[idx % fallbackCovers.length]),
         relativeTime: relativeTime(item.publishedAt || item.createdAt),
-        sourceText: item.sourceName || item.category || '新闻源'
+        sourceText: isDynamic
+          ? (item.authorName || item.sourceName || '用户')
+          : (item.sourceName || item.category || '新闻源')
       }))
 
       const isFirstPage = state.page === 1

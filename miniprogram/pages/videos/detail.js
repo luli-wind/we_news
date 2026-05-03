@@ -21,11 +21,17 @@ function toRelativeTime(source) {
 function flattenComments(roots) {
   if (!Array.isArray(roots)) return []
   const result = []
+  const nicknameMap = {}
   roots.forEach((root) => {
-    result.push({ ...root, isReply: false, displayName: root.userNickname || '用户', timeText: toRelativeTime(root.createdAt) })
+    const rootName = root.userNickname || '用户'
+    nicknameMap[root.id] = rootName
+    result.push({ ...root, isReply: false, displayName: rootName, timeText: toRelativeTime(root.createdAt) })
     if (root.replies && root.replies.length) {
       root.replies.forEach((reply) => {
-        result.push({ ...reply, isReply: true, displayName: reply.userNickname || '用户', timeText: toRelativeTime(reply.createdAt) })
+        const replyName = reply.userNickname || '用户'
+        const parentName = nicknameMap[reply.parentId] || rootName
+        nicknameMap[reply.id] = replyName
+        result.push({ ...reply, isReply: true, displayName: replyName, parentNickname: parentName, timeText: toRelativeTime(reply.createdAt) })
       })
     }
   })

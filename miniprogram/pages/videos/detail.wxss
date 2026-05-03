@@ -89,6 +89,19 @@
   border-left: 3rpx solid #e24b4b;
 }
 
+.reply-indicator {
+  font-size: 20rpx;
+  color: #e24b4b;
+  margin-top: 4rpx;
+  margin-bottom: 4rpx;
+}
+
+.reply-to {
+  background: #fef2f2;
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+}
+
 .comment-top {
   display: flex;
   align-items: center;

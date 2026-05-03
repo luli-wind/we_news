@@ -24,11 +24,17 @@ function toRelativeTime(source) {
 function flattenComments(roots) {
   if (!Array.isArray(roots)) return []
   const result = []
+  const nicknameMap = {}
   roots.forEach((root) => {
-    result.push({ ...root, isReply: false, displayName: root.userNickname || '用户', timeText: toRelativeTime(root.createdAt) })
+    const rootName = root.userNickname || '用户'
+    nicknameMap[root.id] = rootName
+    result.push({ ...root, isReply: false, displayName: rootName, timeText: toRelativeTime(root.createdAt) })
     if (root.replies && root.replies.length) {
       root.replies.forEach((reply) => {
-        result.push({ ...reply, isReply: true, displayName: reply.userNickname || '用户', timeText: toRelativeTime(reply.createdAt) })
+        const replyName = reply.userNickname || '用户'
+        const parentName = nicknameMap[reply.parentId] || rootName
+        nicknameMap[reply.id] = replyName
+        result.push({ ...reply, isReply: true, displayName: replyName, parentNickname: parentName, timeText: toRelativeTime(reply.createdAt) })
       })
     }
   })
@@ -49,8 +55,8 @@ Page({
     replyHint: '',
     favorited: false,
     favoriteButtonText: '收藏',
-    supportCount: 29,
-    opposeCount: 2,
+    liked: false,
+    supportCount: 0,
     publishTimeText: '刚刚'
   },
 
@@ -121,6 +127,15 @@ Page({
       }
     })
     return false
+  },
+
+  onLike() {
+    const liked = !this.data.liked
+    this.setData({
+      liked,
+      supportCount: liked ? this.data.supportCount + 1 : Math.max(0, this.data.supportCount - 1)
+    })
+    wx.showToast({ title: liked ? '已点赞' : '取消点赞', icon: 'none', duration: 800 })
   },
 
   async toggleFavorite() {

@@ -13,9 +13,11 @@ import com.course.newsplatform.dto.NewsSyncRequest;
 import com.course.newsplatform.dto.NewsSyncResult;
 import com.course.newsplatform.entity.News;
 import com.course.newsplatform.entity.NewsMedia;
+import com.course.newsplatform.entity.User;
 import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.mapper.NewsMapper;
 import com.course.newsplatform.mapper.NewsMediaMapper;
+import com.course.newsplatform.mapper.UserMapper;
 import com.course.newsplatform.service.LogService;
 import com.course.newsplatform.service.NewsService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -75,6 +78,7 @@ public class NewsServiceImpl implements NewsService {
 
     private final NewsMapper newsMapper;
     private final NewsMediaMapper newsMediaMapper;
+    private final UserMapper userMapper;
     private final LogService logService;
 
     @Override
@@ -98,6 +102,7 @@ public class NewsServiceImpl implements NewsService {
         wrapper.orderByDesc(News::getPublishedAt).orderByDesc(News::getCreatedAt);
 
         Page<News> page = newsMapper.selectPage(new Page<>(request.getPage(), request.getPageSize()), wrapper);
+        populateAuthorNames(page.getRecords());
         return PageUtils.toPageResponse(page);
     }
 
@@ -115,6 +120,12 @@ public class NewsServiceImpl implements NewsService {
                         .eq(NewsMedia::getNewsId, id)
                         .orderByAsc(NewsMedia::getSortOrder));
         news.setMedia(media);
+        if (news.getAuthorId() != null) {
+            User author = userMapper.selectById(news.getAuthorId());
+            if (author != null) {
+                news.setAuthorName(author.getNickname());
+            }
+        }
         return news;
     }
 
@@ -539,6 +550,23 @@ public class NewsServiceImpl implements NewsService {
     }
 
     protected record DomesticFeed(String key, String sourceName, String defaultCategory, String url) {
+    }
+
+    private void populateAuthorNames(List<News> newsList) {
+        if (newsList == null || newsList.isEmpty()) return;
+        Set<Long> authorIds = newsList.stream()
+                .map(News::getAuthorId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (authorIds.isEmpty()) return;
+        Map<Long, String> nameMap = userMapper.selectList(new LambdaQueryWrapper<User>().in(User::getId, authorIds))
+                .stream()
+                .collect(Collectors.toMap(User::getId, u -> u.getNickname() != null ? u.getNickname() : "用户"));
+        newsList.forEach(n -> {
+            if (n.getAuthorId() != null && nameMap.containsKey(n.getAuthorId())) {
+                n.setAuthorName(nameMap.get(n.getAuthorId()));
+            }
+        });
     }
 
     private boolean schemaSupportsSourceFields() {

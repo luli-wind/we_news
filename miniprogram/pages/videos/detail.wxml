@@ -38,6 +38,9 @@
           <view class="comment-avatar">{{item.displayName.substring(0, 1)}}</view>
           <view class="comment-user">{{item.displayName}}</view>
         </view>
+        <view wx:if="{{item.isReply && item.parentNickname}}" class="reply-indicator">
+          <text class="reply-to">回复 @{{item.parentNickname}}</text>
+        </view>
         <view class="comment-content">{{item.content}}</view>
         <view class="comment-bottom">
           <view class="comment-time">{{item.timeText}}</view>

@@ -115,6 +115,11 @@
   background: #f8fafc;
 }
 
+.action-item--active {
+  background: #fef2f2;
+  color: #e24b4b;
+}
+
 .action-icon {
   font-size: 30rpx;
 }
