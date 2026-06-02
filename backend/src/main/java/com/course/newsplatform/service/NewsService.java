@@ -22,4 +22,6 @@ public interface NewsService {
     NewsSyncResult syncDomesticNews(NewsSyncRequest request);
 
     long count();
+
+    java.util.Map<String, Object> repairImages();
 }

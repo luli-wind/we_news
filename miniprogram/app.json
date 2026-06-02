@@ -2,8 +2,6 @@
   "pages": [
     "pages/news/index",
     "pages/news/detail",
-    "pages/videos/index",
-    "pages/videos/detail",
     "pages/me/index",
     "pages/submission/index",
     "pages/me/favorites/index",
@@ -28,10 +26,6 @@
       {
         "pagePath": "pages/news/index",
         "text": "首页"
-      },
-      {
-        "pagePath": "pages/videos/index",
-        "text": "视频"
       },
       {
         "pagePath": "pages/me/index",

@@ -76,4 +76,10 @@ public class NewsController {
     public ApiResponse<NewsSyncResult> syncDomestic(@Valid @RequestBody(required = false) NewsSyncRequest request) {
         return ApiResponse.success(newsService.syncDomesticNews(request));
     }
+
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    @PostMapping("/api/admin/news/repair-images")
+    public ApiResponse<Map<String, Object>> repairImages() {
+        return ApiResponse.success(newsService.repairImages());
+    }
 }

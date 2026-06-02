@@ -1,4 +1,5 @@
 const app = getApp()
+const { resolveImageUrl } = require('../../utils/config')
 
 Page({
   data: {
@@ -15,7 +16,7 @@ Page({
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 2 })
+      this.getTabBar().setData({ selected: 1 })
     }
     this.checkAndLoad()
   },
@@ -50,7 +51,7 @@ Page({
       const roleText = roles.length ? roles.join(' / ') : '普通用户'
       const nicknameText = profile && profile.nickname ? profile.nickname : '微信用户'
       const avatarText = String(nicknameText).substring(0, 1)
-      const avatarUrl = profile && profile.avatar ? profile.avatar : ''
+      const avatarUrl = profile && profile.avatar ? resolveImageUrl(profile.avatar) : ''
 
       this.setData({
         profile: profile || {},

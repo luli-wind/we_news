@@ -23,8 +23,8 @@ Page({
     if (!item) return
     if (item.bizType === 'NEWS') {
       wx.navigateTo({ url: `/pages/news/detail?id=${item.bizId}` })
-    } else if (item.bizType === 'VIDEO') {
-      wx.navigateTo({ url: `/pages/videos/detail?id=${item.bizId}` })
+    } else {
+      wx.showToast({ title: '内容已下线', icon: 'none' })
     }
   },
 

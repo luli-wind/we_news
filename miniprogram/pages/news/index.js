@@ -1,15 +1,5 @@
 const { request } = require('../../utils/request')
-
-const fallbackCovers = [
-  'https://images.unsplash.com/photo-1504711434969-e33886168d6c?w=400&q=60',
-  'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=400&q=60',
-  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=60',
-  'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=60',
-  'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&q=60',
-  'https://images.unsplash.com/photo-1551033406-611cf9a28f67?w=400&q=60',
-  'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&q=60',
-  'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&q=60'
-]
+const { resolveImageUrl } = require('../../utils/config')
 
 function relativeTime(source) {
   if (!source) return '刚刚'
@@ -90,12 +80,12 @@ Page({
 
       const data = await request('/api/news', 'GET', params)
       const isDynamic = channel === CHANNEL_DYNAMIC
-      const list = (data && Array.isArray(data.list) ? data.list : []).map((item, idx) => ({
+      const list = (data && Array.isArray(data.list) ? data.list : []).map((item) => ({
         id: item.id,
         title: item.title || '未命名新闻',
-        summary: item.summary || '暂无摘要',
+        summary: item.summary || '',
         categoryText: item.category || '推荐',
-        coverUrl: isDynamic ? (item.coverUrl || '') : (item.coverUrl || fallbackCovers[idx % fallbackCovers.length]),
+        coverUrl: resolveImageUrl(item.coverUrl),
         relativeTime: relativeTime(item.publishedAt || item.createdAt),
         sourceText: isDynamic
           ? (item.authorName || item.sourceName || '用户')

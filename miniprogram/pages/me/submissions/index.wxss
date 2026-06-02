@@ -110,7 +110,6 @@
   margin-top: 12rpx;
   border-radius: 12rpx;
   overflow: hidden;
-  background: #f3f4f6;
 }
 
 .card-media-img {
@@ -169,6 +168,18 @@
 .action-btn--resubmit {
   color: #ffffff;
   background: linear-gradient(135deg, #e24b4b, #c53030);
+}
+
+.action-btn--edit {
+  color: #e24b4b;
+  background: #fef2f2;
+  border: 1rpx solid #fecaca;
+}
+
+.action-btn--delete {
+  color: #999;
+  background: #f9fafb;
+  border: 1rpx solid #e5e7eb;
 }
 
 /* ===== 空状态 ===== */

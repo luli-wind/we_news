@@ -17,6 +17,7 @@
         </el-select>
         <el-button type="primary" @click="load">查询</el-button>
         <el-button type="warning" :loading="syncing" @click="syncNews">同步国内新闻</el-button>
+        <el-button :loading="repairing" @click="repairImages">修复新闻图片</el-button>
         <el-button type="success" @click="openCreate">新建新闻</el-button>
       </div>
 
@@ -83,12 +84,13 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews, uploadFile } from '../api/modules'
+import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews, repairNewsImages, uploadFile } from '../api/modules'
 
 const query = reactive({ page: 1, pageSize: 10, keyword: '', status: '' })
 const total = ref(0)
 const list = ref([])
 const syncing = ref(false)
+const repairing = ref(false)
 const showDialog = ref(false)
 const form = reactive({ id: null, title: '', summary: '', content: '', category: '', coverUrl: '', status: 'DRAFT' })
 
@@ -156,6 +158,19 @@ const syncNews = async () => {
     await load()
   } finally {
     syncing.value = false
+  }
+}
+
+const repairImages = async () => {
+  repairing.value = true
+  try {
+    const data = await repairNewsImages()
+    ElMessage.success(`图片修复完成：已修复 ${data.fixed}，跳过 ${data.skipped}`)
+    await load()
+  } catch (e) {
+    ElMessage.error('修复失败')
+  } finally {
+    repairing.value = false
   }
 }
 

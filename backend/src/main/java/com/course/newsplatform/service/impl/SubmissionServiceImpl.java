@@ -107,4 +107,42 @@ public class SubmissionServiceImpl implements SubmissionService {
 
         logService.operation("submission", "audit", "审核投稿 " + id + " => " + status.name());
     }
+
+    @Override
+    public void update(Long id, SubmissionCreateRequest request) {
+        PostSubmission submission = postSubmissionMapper.selectById(id);
+        if (submission == null) throw new BizException("投稿不存在");
+        if (!submission.getUserId().equals(SecurityUtils.currentUserId())) {
+            throw new BizException(4032, "只能编辑自己的投稿");
+        }
+        if (!SubmissionStatus.PENDING.name().equals(submission.getStatus())
+                && !SubmissionStatus.REJECTED.name().equals(submission.getStatus())) {
+            throw new BizException("只能编辑待审核或已驳回的投稿");
+        }
+        submission.setTitle(request.getTitle());
+        submission.setContent(request.getContent());
+        submission.setMediaType(request.getMediaType());
+        submission.setMediaUrl(request.getMediaUrl());
+        postSubmissionMapper.updateById(submission);
+        logService.operation("submission", "update", "用户编辑投稿: " + id);
+    }
+
+    @Override
+    public void delete(Long id) {
+        PostSubmission submission = postSubmissionMapper.selectById(id);
+        if (submission == null) throw new BizException("投稿不存在");
+        if (!submission.getUserId().equals(SecurityUtils.currentUserId())) {
+            throw new BizException(4032, "只能删除自己的投稿");
+        }
+        postSubmissionMapper.deleteById(id);
+        logService.operation("submission", "delete", "用户删除投稿: " + id);
+    }
+
+    @Override
+    public void adminDelete(Long id) {
+        if (postSubmissionMapper.deleteById(id) == 0) {
+            throw new BizException("投稿不存在");
+        }
+        logService.operation("submission", "delete_admin", "后台删除投稿: " + id);
+    }
 }

@@ -55,11 +55,28 @@ function resolveBaseUrl() {
   return target
 }
 
+function resolveImageUrl(path) {
+  if (!path || typeof path !== 'string') return ''
+  if (path.startsWith('//')) return 'https:' + path
+  const base = resolveBaseUrl()
+  // If it's an absolute URL pointing to our own server (old data), extract path and re-resolve
+  if (/^https?:\/\//i.test(path)) {
+    try {
+      const url = path.replace(/^https?:\/\//i, '')
+      const slashIdx = url.indexOf('/')
+      if (slashIdx > 0) return base + url.substring(slashIdx)
+    } catch (e) { /* fall through */ }
+    return path
+  }
+  return base + (path.startsWith('/') ? path : '/' + path)
+}
+
 module.exports = {
   DEVTOOLS_BASE_URL,
   DEVICE_DEBUG_BASE_URL,
   API_BASE_URL,
   isDevtoolsRuntime,
   normalizeOverrideBaseUrl,
-  BASE_URL: resolveBaseUrl()
+  BASE_URL: resolveBaseUrl(),
+  resolveImageUrl
 }

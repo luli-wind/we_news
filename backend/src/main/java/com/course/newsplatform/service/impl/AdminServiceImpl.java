@@ -12,7 +12,6 @@ import com.course.newsplatform.entity.PostSubmission;
 import com.course.newsplatform.entity.Role;
 import com.course.newsplatform.entity.User;
 import com.course.newsplatform.entity.UserRole;
-import com.course.newsplatform.entity.Video;
 import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.enums.SubmissionStatus;
 import com.course.newsplatform.mapper.NewsMapper;
@@ -21,7 +20,6 @@ import com.course.newsplatform.mapper.PostSubmissionMapper;
 import com.course.newsplatform.mapper.RoleMapper;
 import com.course.newsplatform.mapper.UserMapper;
 import com.course.newsplatform.mapper.UserRoleMapper;
-import com.course.newsplatform.mapper.VideoMapper;
 import com.course.newsplatform.service.AdminService;
 import com.course.newsplatform.service.LogService;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +42,6 @@ public class AdminServiceImpl implements AdminService {
     private final UserRoleMapper userRoleMapper;
     private final OperationLogMapper operationLogMapper;
     private final NewsMapper newsMapper;
-    private final VideoMapper videoMapper;
     private final PostSubmissionMapper postSubmissionMapper;
     private final LogService logService;
 
@@ -89,8 +86,6 @@ public class AdminServiceImpl implements AdminService {
     public Map<String, Object> dashboard() {
         long newsCount = newsMapper.selectCount(
                 new LambdaQueryWrapper<News>().eq(News::getStatus, ContentStatus.PUBLISHED.name()));
-        long videoCount = videoMapper.selectCount(
-                new LambdaQueryWrapper<Video>().eq(Video::getStatus, ContentStatus.PUBLISHED.name()));
         long pendingSubmissions = postSubmissionMapper.selectCount(
                 new LambdaQueryWrapper<PostSubmission>().eq(PostSubmission::getStatus, SubmissionStatus.PENDING.name()));
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
@@ -122,7 +117,6 @@ public class AdminServiceImpl implements AdminService {
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("newsCount", newsCount);
-        data.put("videoCount", videoCount);
         data.put("pendingSubmissions", pendingSubmissions);
         data.put("todayOperations", todayOperations);
         data.put("recentNews", recentNews);

@@ -67,24 +67,7 @@
       </view>
     </view>
 
-    <view class="menu-group">
-      <view class="menu-row">
-        <view class="menu-icon">🔔</view>
-        <view class="menu-text">消息通知</view>
-        <view class="menu-arrow">›</view>
-      </view>
-      <view class="menu-row">
-        <view class="menu-icon">ℹ️</view>
-        <view class="menu-text">关于我们</view>
-        <view class="menu-arrow">›</view>
-      </view>
-      <view class="menu-row">
-        <view class="menu-icon">⚙️</view>
-        <view class="menu-text">系统设置</view>
-        <view class="menu-arrow">›</view>
-      </view>
-    </view>
-
+ 
     <view class="logout-area">
       <view class="logout-btn" bindtap="handleLogout">退出登录</view>
     </view>

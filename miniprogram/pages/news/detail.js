@@ -1,4 +1,5 @@
 const { request } = require('../../utils/request')
+const { resolveImageUrl } = require('../../utils/config')
 
 function toParagraphs(content) {
   if (!content) return ['暂无正文内容。']
@@ -74,9 +75,11 @@ Page({
       const detail = await request(`/api/news/${this.data.id}`)
       const authorName = (detail && (detail.sourceName || detail.category)) || '新闻中心'
       const mediaImages = (detail && Array.isArray(detail.media)
-        ? detail.media.filter(m => m.mediaType === 'IMAGE')
+        ? detail.media.filter(m => m.mediaType === 'IMAGE').map(m => ({ ...m, url: resolveImageUrl(m.url) }))
         : [])
-      if (!detail.coverUrl && mediaImages.length > 0) {
+      if (detail.coverUrl) {
+        detail.coverUrl = resolveImageUrl(detail.coverUrl)
+      } else if (mediaImages.length > 0) {
         detail.coverUrl = mediaImages[0].url
       }
       this.setData({

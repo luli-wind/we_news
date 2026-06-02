@@ -135,7 +135,35 @@ public class CommentServiceImpl implements CommentService {
             return view;
         }).toList();
 
+        populateBizTitles(list);
+
         return PageResponse.of(page.getCurrent(), page.getSize(), page.getTotal(), list);
+    }
+
+    private void populateBizTitles(List<CommentView> list) {
+        if (list == null || list.isEmpty()) return;
+        Set<Long> newsIds = new HashSet<>();
+        Set<Long> videoIds = new HashSet<>();
+        for (CommentView v : list) {
+            if ("NEWS".equals(v.getBizType())) newsIds.add(v.getBizId());
+            else if ("VIDEO".equals(v.getBizType())) videoIds.add(v.getBizId());
+        }
+        Map<Long, String> newsTitleMap = new HashMap<>();
+        Map<Long, String> videoTitleMap = new HashMap<>();
+        if (!newsIds.isEmpty()) {
+            newsMapper.selectList(new LambdaQueryWrapper<News>().in(News::getId, newsIds))
+                    .forEach(n -> newsTitleMap.put(n.getId(), n.getTitle()));
+        }
+        if (!videoIds.isEmpty()) {
+            videoMapper.selectList(new LambdaQueryWrapper<Video>().in(Video::getId, videoIds))
+                    .forEach(v -> videoTitleMap.put(v.getId(), v.getTitle()));
+        }
+        for (CommentView v : list) {
+            String title = "NEWS".equals(v.getBizType())
+                    ? newsTitleMap.getOrDefault(v.getBizId(), v.getBizType() + " #" + v.getBizId())
+                    : videoTitleMap.getOrDefault(v.getBizId(), v.getBizType() + " #" + v.getBizId());
+            v.setBizTitle(title);
+        }
     }
 
     @Override

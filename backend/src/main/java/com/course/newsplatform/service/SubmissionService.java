@@ -15,4 +15,10 @@ public interface SubmissionService {
     PageResponse<PostSubmission> adminPage(PageQuery query, String status);
 
     void audit(Long id, SubmissionAuditRequest request);
+
+    void update(Long id, SubmissionCreateRequest request);
+
+    void delete(Long id);
+
+    void adminDelete(Long id);
 }

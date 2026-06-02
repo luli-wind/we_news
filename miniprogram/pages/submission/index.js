@@ -1,4 +1,5 @@
 const { request, BASE_URL } = require('../../utils/request')
+const { resolveImageUrl } = require('../../utils/config')
 
 function classifyError(error) {
   const msg = (error && error.message) || ''
@@ -14,7 +15,9 @@ function classifyError(error) {
 
 Page({
   data: {
+    editId: null,
     form: { title: '', content: '', mediaType: 'NONE', mediaUrl: '' },
+    mediaDisplayUrl: '',
     hasImage: false,
     hasVideo: false,
     uploading: false,
@@ -26,8 +29,14 @@ Page({
     const draft = wx.getStorageSync('submissionDraft')
     if (draft) {
       this.setData({
+        editId: draft.editId || null,
         'form.title': draft.title || '',
-        'form.content': draft.content || ''
+        'form.content': draft.content || '',
+        'form.mediaType': draft.mediaType || 'NONE',
+        'form.mediaUrl': draft.mediaUrl || '',
+        'form.mediaDisplayUrl': resolveImageUrl(draft.mediaUrl),
+        hasImage: draft.mediaType === 'IMAGE',
+        hasVideo: draft.mediaType === 'VIDEO'
       })
       wx.removeStorageSync('submissionDraft')
     }
@@ -75,6 +84,7 @@ Page({
           const isVideo = fileType === 'video'
           this.setData({
             'form.mediaUrl': payload.data.url,
+            'form.mediaDisplayUrl': resolveImageUrl(payload.data.url),
             'form.mediaType': isVideo ? 'VIDEO' : 'IMAGE',
             hasImage: !isVideo,
             hasVideo: isVideo
@@ -96,6 +106,7 @@ Page({
   clearMedia() {
     this.setData({
       'form.mediaType': 'NONE', 'form.mediaUrl': '',
+      mediaDisplayUrl: '',
       hasImage: false, hasVideo: false
     })
   },
@@ -137,10 +148,18 @@ Page({
     this.setData({ submitting: true, errorInfo: null })
 
     try {
-      await request('/api/submissions', 'POST', this.data.form)
-      wx.showToast({ title: '发布成功，等待审核', icon: 'none' })
+      const editId = this.data.editId
+      if (editId) {
+        await request(`/api/submissions/${editId}`, 'PUT', this.data.form)
+        wx.showToast({ title: '修改成功', icon: 'none' })
+      } else {
+        await request('/api/submissions', 'POST', this.data.form)
+        wx.showToast({ title: '发布成功，等待审核', icon: 'none' })
+      }
       this.setData({
+        editId: null,
         form: { title: '', content: '', mediaType: 'NONE', mediaUrl: '' },
+        mediaDisplayUrl: '',
         hasImage: false, hasVideo: false, submitting: false
       })
       setTimeout(() => { wx.navigateBack() }, 800)

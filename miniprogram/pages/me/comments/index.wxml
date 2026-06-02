@@ -1,17 +1,22 @@
 <view class="comments-page">
   <view class="page-header">
     <view class="page-title">我的评论</view>
+    <view class="page-count" wx:if="{{list.length > 0}}">共 {{list.length}} 条</view>
   </view>
 
   <block wx:if="{{list.length > 0}}">
     <view wx:for="{{list}}" wx:key="id" class="comment-card">
-      <view class="comment-content">{{item.content}}</view>
-      <view class="comment-meta">
-        <view class="comment-source" data-item="{{item}}" bindtap="goSource">
-          {{item.bizType === 'NEWS' ? '📰 新闻' : '🎬 视频'}} #{{item.bizId}}
+      <view class="comment-body">
+        <view class="comment-text">{{item.content}}</view>
+      </view>
+      <view class="comment-divider"></view>
+      <view class="comment-footer">
+        <view class="comment-target" data-item="{{item}}" bindtap="goSource">
+          <text class="target-icon">📰</text>
+          <text class="target-title">{{item.bizTitle || (item.bizType + ' #' + item.bizId)}}</text>
         </view>
         <view class="comment-actions">
-          <text class="action-link" data-item="{{item}}" bindtap="goSource">查看原文</text>
+          <text class="action-link" data-item="{{item}}" bindtap="goSource">查看</text>
           <text class="action-delete" data-id="{{item.id}}" catchtap="deleteComment">删除</text>
         </view>
       </view>

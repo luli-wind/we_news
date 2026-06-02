@@ -48,7 +48,7 @@
             <span v-else class="no-remark">--</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="scope">
             <el-button
               v-if="scope.row.status === 'PENDING'"
@@ -63,6 +63,17 @@
               @click="openReject(scope.row.id)"
             >驳回</el-button>
             <span v-else class="done-text">已完成</span>
+            <el-button size="small" @click="preview(scope.row)" style="margin-left:8px">预览</el-button>
+            <el-popconfirm
+              title="确定要删除该投稿吗？删除后不可恢复。"
+              confirm-button-text="删除"
+              cancel-button-text="取消"
+              @confirm="remove(scope.row.id)"
+            >
+              <template #reference>
+                <el-button size="small" class="delete-btn">删除</el-button>
+              </template>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -76,6 +87,45 @@
         @current-change="onPageChange"
       />
     </div>
+
+    <!-- 预览对话框 -->
+    <el-dialog v-model="previewVisible" width="680px">
+      <template #header>
+        <div class="preview-header">
+          <span class="preview-header-title">📋 投稿详情</span>
+          <el-tag v-if="previewData" :type="statusType(previewData.status)" size="small">{{ statusLabel(previewData.status) }}</el-tag>
+        </div>
+      </template>
+      <template v-if="previewData">
+        <div class="preview-body">
+          <h2 class="preview-title">{{ previewData.title }}</h2>
+          <div class="preview-meta">
+            <span>投稿时间：{{ previewData.createdAt }}</span>
+          </div>
+          <div class="preview-divider"></div>
+          <div class="preview-content">{{ previewData.content || '（无正文内容）' }}</div>
+          <template v-if="previewData.mediaUrl">
+            <div class="preview-divider"></div>
+            <div class="preview-media-label">📎 附件预览</div>
+            <div class="preview-media-wrap">
+              <img v-if="previewData.mediaType === 'IMAGE'" :src="previewData.mediaUrl" class="preview-media-img" />
+              <video v-else-if="previewData.mediaType === 'VIDEO'" :src="previewData.mediaUrl" class="preview-media-video" controls />
+              <a v-else :href="previewData.mediaUrl" target="_blank" class="preview-media-link">{{ previewData.mediaUrl }}</a>
+            </div>
+          </template>
+          <template v-if="previewData.reviewRemark">
+            <div class="preview-divider"></div>
+            <div class="preview-remark-card">
+              <div class="preview-remark-label">💬 审核备注</div>
+              <div class="preview-remark-text">{{ previewData.reviewRemark }}</div>
+            </div>
+          </template>
+        </div>
+      </template>
+      <template #footer>
+        <el-button @click="previewVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 驳回对话框 -->
     <el-dialog v-model="rejectVisible" title="驳回投稿" width="480px">
@@ -102,7 +152,7 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { fetchSubmissions, auditSubmission } from '../api/modules'
+import { fetchSubmissions, auditSubmission, deleteSubmission } from '../api/modules'
 
 const query = reactive({ page: 1, pageSize: 10, status: '' })
 const total = ref(0)
@@ -111,6 +161,14 @@ const list = ref([])
 const rejectVisible = ref(false)
 const rejectForm = reactive({ id: null, reviewRemark: '' })
 const selectedIds = ref([])
+
+const previewVisible = ref(false)
+const previewData = ref(null)
+
+const preview = (row) => {
+  previewData.value = row
+  previewVisible.value = true
+}
 
 const onSelectionChange = (rows) => {
   selectedIds.value = rows.map(r => r.id)
@@ -199,6 +257,12 @@ const doReject = async () => {
   load()
 }
 
+const remove = async (id) => {
+  await deleteSubmission(id)
+  ElMessage.success('删除成功')
+  load()
+}
+
 onMounted(load)
 </script>
 
@@ -221,5 +285,117 @@ onMounted(load)
 .done-text {
   color: #999;
   font-size: 13px;
+}
+
+.delete-btn {
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+  background: #fef2f2 !important;
+}
+
+.delete-btn:hover {
+  color: #fff !important;
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+/* 预览弹窗 */
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-header-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.preview-body {
+  padding: 4px 0;
+}
+
+.preview-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1.45;
+}
+
+.preview-meta {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #999;
+}
+
+.preview-divider {
+  height: 1px;
+  background: #eef0f3;
+  margin: 18px 0;
+}
+
+.preview-content {
+  font-size: 15px;
+  color: #374151;
+  line-height: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.preview-media-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.preview-media-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+
+.preview-media-img {
+  max-width: 100%;
+  max-height: 460px;
+  display: block;
+}
+
+.preview-media-video {
+  width: 100%;
+  max-height: 400px;
+  outline: none;
+}
+
+.preview-media-link {
+  color: #2563eb;
+  font-size: 13px;
+  word-break: break-all;
+  padding: 20px;
+}
+
+.preview-remark-card {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  border-radius: 0 10px 10px 0;
+  padding: 14px 16px;
+}
+
+.preview-remark-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+  margin-bottom: 6px;
+}
+
+.preview-remark-text {
+  font-size: 14px;
+  color: #7f1d1d;
+  line-height: 1.7;
 }
 </style>

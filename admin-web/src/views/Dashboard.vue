@@ -16,13 +16,6 @@
           <div class="stat-card__label">已发布新闻</div>
         </div>
       </div>
-      <div class="stat-card stat-card--video">
-        <div class="stat-card__icon">🎬</div>
-        <div class="stat-card__body">
-          <div class="stat-card__value">{{ stats.videoCount }}</div>
-          <div class="stat-card__label">已发布视频</div>
-        </div>
-      </div>
       <div class="stat-card stat-card--pending">
         <div class="stat-card__icon">📝</div>
         <div class="stat-card__body">
@@ -63,18 +56,10 @@
             <span class="quick-btn__icon">✏️</span>
             <span>管理新闻</span>
           </router-link>
-          <router-link to="/videos" class="quick-btn quick-btn--video">
-            <span class="quick-btn__icon">🎬</span>
-            <span>管理视频</span>
-          </router-link>
           <router-link to="/submissions" class="quick-btn quick-btn--pending">
             <span class="quick-btn__icon">📋</span>
             <span>审核投稿</span>
             <el-badge v-if="stats.pendingSubmissions > 0" :value="stats.pendingSubmissions" class="quick-badge" />
-          </router-link>
-          <router-link to="/media" class="quick-btn quick-btn--media">
-            <span class="quick-btn__icon">🖼️</span>
-            <span>媒体资源</span>
           </router-link>
           <router-link to="/comments" class="quick-btn quick-btn--comment">
             <span class="quick-btn__icon">💬</span>
@@ -192,7 +177,6 @@ onMounted(async () => {
 }
 
 .stat-card--news .stat-card__icon { background: #eef2ff; }
-.stat-card--video .stat-card__icon { background: #fef3c7; }
 .stat-card--pending .stat-card__icon { background: #fef2f2; }
 .stat-card--ops .stat-card__icon { background: #ecfdf5; }
 
@@ -287,9 +271,7 @@ onMounted(async () => {
 .quick-btn__icon { font-size: 18px; }
 
 .quick-btn--news:hover { border-color: #e24b4b; color: #e24b4b; }
-.quick-btn--video:hover { border-color: #f59e0b; color: #f59e0b; }
 .quick-btn--pending:hover { border-color: #22b573; color: #22b573; }
-.quick-btn--media:hover { border-color: #667eea; color: #667eea; }
 .quick-btn--comment:hover { border-color: #0ea5a4; color: #0ea5a4; }
 
 .quick-badge {

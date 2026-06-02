@@ -43,4 +43,23 @@ public class SubmissionController {
         submissionService.audit(id, request);
         return ApiResponse.success();
     }
+
+    @PutMapping("/{id}")
+    public ApiResponse<Void> update(@PathVariable Long id, @Valid @RequestBody SubmissionCreateRequest request) {
+        submissionService.update(id, request);
+        return ApiResponse.success();
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        submissionService.delete(id);
+        return ApiResponse.success();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    @DeleteMapping("/admin/{id}")
+    public ApiResponse<Void> adminDelete(@PathVariable Long id) {
+        submissionService.adminDelete(id);
+        return ApiResponse.success();
+    }
 }

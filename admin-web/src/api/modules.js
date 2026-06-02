@@ -7,11 +7,7 @@ export const createNews = (data) => request.post('/api/news', data)
 export const updateNews = (id, data) => request.put(`/api/news/${id}`, data)
 export const deleteNews = (id) => request.delete(`/api/news/${id}`)
 export const syncDomesticNews = (data = {}) => request.post('/api/admin/news/sync/domestic', data)
-
-export const fetchVideos = (params) => request.get('/api/admin/videos', { params })
-export const createVideo = (data) => request.post('/api/videos', data)
-export const updateVideo = (id, data) => request.put(`/api/videos/${id}`, data)
-export const deleteVideo = (id) => request.delete(`/api/videos/${id}`)
+export const repairNewsImages = () => request.post('/api/admin/news/repair-images')
 
 export const fetchComments = (params) => request.get('/api/comments', { params })
 export const fetchAllComments = (params) => request.get('/api/comments/admin/all', { params })
@@ -19,6 +15,7 @@ export const deleteComment = (id) => request.delete(`/api/comments/admin/${id}`)
 
 export const fetchSubmissions = (params) => request.get('/api/submissions/admin', { params })
 export const auditSubmission = (id, data) => request.put(`/api/submissions/admin/${id}/audit`, data)
+export const deleteSubmission = (id) => request.delete(`/api/submissions/admin/${id}`)
 
 export const fetchUsers = (params) => request.get('/api/admin/users', { params })
 export const fetchRoles = () => request.get('/api/admin/roles')

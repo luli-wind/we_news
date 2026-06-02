@@ -8,11 +8,6 @@ Component({
         icon: 'home'
       },
       {
-        pagePath: '/pages/videos/index',
-        text: '视频',
-        icon: 'video'
-      },
-      {
         pagePath: '/pages/me/index',
         text: '我的',
         icon: 'user'

@@ -11,12 +11,12 @@
 
     <view class="channel-tabs">
       <view class="channel-tab {{channel === 'headline' ? 'channel-tab--active' : ''}}" data-channel="headline" bindtap="switchChannel">
-        <text>头条</text>
-        <view wx:if="{{channel === 'headline'}}" class="tab-indicator"></view>
+        <text class="tab-icon">📰</text>
+        <text class="tab-label">头条</text>
       </view>
       <view class="channel-tab {{channel === 'dynamic' ? 'channel-tab--active' : ''}}" data-channel="dynamic" bindtap="switchChannel">
-        <text>动态</text>
-        <view wx:if="{{channel === 'dynamic'}}" class="tab-indicator"></view>
+        <text class="tab-icon">💬</text>
+        <text class="tab-label">动态</text>
       </view>
     </view>
   </view>
@@ -34,13 +34,12 @@
     </block>
 
     <block wx:for="{{headline.feed}}" wx:key="id">
-      <view class="feed-card" data-id="{{item.id}}" bindtap="goDetail">
+      <view class="feed-card {{!item.coverUrl ? 'feed-card--no-thumb' : ''}}" data-id="{{item.id}}" bindtap="goDetail">
         <view class="feed-body">
           <view class="feed-title">{{item.title}}</view>
-          <view class="feed-summary">{{item.summary}}</view>
+          <view wx:if="{{item.summary}}" class="feed-summary">{{item.summary}}</view>
         </view>
         <image wx:if="{{item.coverUrl}}" class="feed-thumb" src="{{item.coverUrl}}" mode="aspectFill" lazy-load binderror="onCoverError" data-index="{{index}}" data-channel="headline" />
-        <view wx:else class="feed-thumb feed-thumb--placeholder"></view>
       </view>
     </block>
 
@@ -80,7 +79,7 @@
           </view>
         </view>
         <view class="dynamic-title">{{item.title}}</view>
-        <view class="dynamic-summary">{{item.summary}}</view>
+        <view wx:if="{{item.summary}}" class="dynamic-summary">{{item.summary}}</view>
         <image wx:if="{{item.coverUrl}}" class="dynamic-cover" src="{{item.coverUrl}}" mode="aspectFill" lazy-load />
       </view>
     </block>

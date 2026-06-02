@@ -18,6 +18,7 @@ import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.mapper.NewsMapper;
 import com.course.newsplatform.mapper.NewsMediaMapper;
 import com.course.newsplatform.mapper.UserMapper;
+import com.course.newsplatform.service.FileStorageService;
 import com.course.newsplatform.service.LogService;
 import com.course.newsplatform.service.NewsService;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,7 @@ public class NewsServiceImpl implements NewsService {
     private final NewsMapper newsMapper;
     private final NewsMediaMapper newsMediaMapper;
     private final UserMapper userMapper;
+    private final FileStorageService fileStorageService;
     private final LogService logService;
 
     @Override
@@ -175,6 +177,33 @@ public class NewsServiceImpl implements NewsService {
     @Override
     public long count() {
         return newsMapper.selectCount(new LambdaQueryWrapper<>());
+    }
+
+    @Override
+    public Map<String, Object> repairImages() {
+        List<News> all = newsMapper.selectList(new LambdaQueryWrapper<News>()
+                .eq(News::getStatus, ContentStatus.PUBLISHED.name()));
+        int fixed = 0;
+        int skipped = 0;
+        for (News news : all) {
+            String cover = news.getCoverUrl();
+            if (cover != null && !cover.isBlank() && !cover.startsWith("/uploads/")) {
+                String local = downloadCoverImage(cover);
+                if (local != null) {
+                    news.setCoverUrl(local);
+                    newsMapper.updateById(news);
+                    fixed++;
+                } else {
+                    skipped++;
+                }
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("total", all.size());
+        result.put("fixed", fixed);
+        result.put("skipped", skipped);
+        logService.operation("news", "repair_images", "fixed=" + fixed + " skipped=" + skipped);
+        return result;
     }
 
     @Override
@@ -328,12 +357,14 @@ public class NewsServiceImpl implements NewsService {
             coverUrl = imageUrls.get(0);
         }
 
+        String localCoverUrl = downloadCoverImage(coverUrl);
+
         News news = new News();
         news.setTitle(title);
         news.setSummary(summary);
         news.setContent(buildContent(summary, sourceUrl, title));
         news.setCategory(category);
-        news.setCoverUrl(coverUrl);
+        news.setCoverUrl(localCoverUrl != null ? localCoverUrl : coverUrl);
         if (supportsSourceFields) {
             news.setSourceName(feed.sourceName());
             news.setSourceUrl(sourceUrl);
@@ -346,10 +377,11 @@ public class NewsServiceImpl implements NewsService {
 
         if (!imageUrls.isEmpty()) {
             for (int i = 0; i < imageUrls.size(); i++) {
+                String localUrl = downloadCoverImage(imageUrls.get(i));
                 NewsMedia media = new NewsMedia();
                 media.setNewsId(news.getId());
                 media.setMediaType("IMAGE");
-                media.setUrl(imageUrls.get(i));
+                media.setUrl(localUrl != null ? localUrl : imageUrls.get(i));
                 media.setSortOrder(i);
                 newsMediaMapper.insert(media);
             }
@@ -409,6 +441,16 @@ public class NewsServiceImpl implements NewsService {
             return "";
         }
         return Objects.toString(nodes.item(0).getTextContent(), "").trim();
+    }
+
+    private String downloadCoverImage(String externalUrl) {
+        if (externalUrl == null || externalUrl.isBlank()) return null;
+        if (externalUrl.startsWith("/uploads/")) return externalUrl;
+        try {
+            return fileStorageService.downloadImage(externalUrl);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private List<String> extractImageUrls(String html) {

@@ -35,8 +35,14 @@
         <view wx:if="{{item.status === 'APPROVED' && item.publishedNewsId}}" class="action-btn action-btn--view" data-news-id="{{item.publishedNewsId}}" bindtap="goDetail">
           查看文章
         </view>
+        <view wx:if="{{item.status === 'PENDING' || item.status === 'REJECTED'}}" class="action-btn action-btn--edit" data-item="{{item}}" bindtap="editItem">
+          编辑
+        </view>
         <view wx:if="{{item.status === 'REJECTED'}}" class="action-btn action-btn--resubmit" data-item="{{item}}" bindtap="resubmit">
           再发一条
+        </view>
+        <view class="action-btn action-btn--delete" data-id="{{item.id}}" bindtap="deleteItem">
+          删除
         </view>
       </view>
     </view>
