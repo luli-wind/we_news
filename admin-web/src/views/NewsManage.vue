@@ -16,8 +16,10 @@
           <el-option label="已驳回" value="REJECTED" />
         </el-select>
         <el-button type="primary" @click="load">查询</el-button>
-        <el-button type="warning" :loading="syncing" @click="syncNews">同步国内新闻</el-button>
-        <el-button :loading="repairing" @click="repairImages">修复新闻图片</el-button>
+<!--        <el-button type="warning" :loading="syncing" @click="syncNews">同步国内新闻</el-button>-->
+        <el-button type="primary" :loading="syncingJuhe" @click="syncJuhe">聚合数据同步</el-button>
+<!--        <el-button :loading="repairing" @click="repairImages">修复新闻图片</el-button>-->
+<!--        <el-button :loading="enriching" @click="enrichContent">丰富新闻内容</el-button>-->
         <el-button type="success" @click="openCreate">新建新闻</el-button>
       </div>
 
@@ -84,13 +86,15 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews, repairNewsImages, uploadFile } from '../api/modules'
+import { fetchNews, createNews, updateNews, deleteNews, syncDomesticNews, repairNewsImages, enrichNewsContent, syncJuheNews, uploadFile } from '../api/modules'
 
 const query = reactive({ page: 1, pageSize: 10, keyword: '', status: '' })
 const total = ref(0)
 const list = ref([])
 const syncing = ref(false)
+const syncingJuhe = ref(false)
 const repairing = ref(false)
+const enriching = ref(false)
 const showDialog = ref(false)
 const form = reactive({ id: null, title: '', summary: '', content: '', category: '', coverUrl: '', status: 'DRAFT' })
 
@@ -171,6 +175,33 @@ const repairImages = async () => {
     ElMessage.error('修复失败')
   } finally {
     repairing.value = false
+  }
+}
+
+const enrichContent = async () => {
+  enriching.value = true
+  try {
+    const data = await enrichNewsContent()
+    ElMessage.success(`内容丰富完成：已增强 ${data.enriched} 篇，跳过 ${data.skipped} 篇`)
+    await load()
+  } catch (e) {
+    ElMessage.error('丰富内容失败')
+  } finally {
+    enriching.value = false
+  }
+}
+
+const syncJuhe = async () => {
+  syncingJuhe.value = true
+  try {
+    const data = await syncJuheNews()
+    ElMessage.success(`聚合数据同步完成：导入 ${data.imported}，跳过 ${data.skipped}，失败 ${data.failed}`)
+    query.page = 1
+    await load()
+  } catch (e) {
+    ElMessage.error((e && e.message) || '聚合同步失败')
+  } finally {
+    syncingJuhe.value = false
   }
 }
 

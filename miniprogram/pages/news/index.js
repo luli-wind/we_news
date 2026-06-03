@@ -1,6 +1,17 @@
 const { request } = require('../../utils/request')
 const { resolveImageUrl } = require('../../utils/config')
 
+function highlightTitle(title, keyword) {
+  if (!keyword || !title) return [{ text: title || '未命名新闻', hl: false }]
+  const kw = keyword.trim()
+  if (!kw) return [{ text: title || '未命名新闻', hl: false }]
+  const parts = title.split(new RegExp(`(${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'))
+  return parts.filter(Boolean).map(text => ({
+    text,
+    hl: text.toLowerCase() === kw.toLowerCase()
+  }))
+}
+
 function relativeTime(source) {
   if (!source) return '刚刚'
   const date = new Date(source)
@@ -83,6 +94,7 @@ Page({
       const list = (data && Array.isArray(data.list) ? data.list : []).map((item) => ({
         id: item.id,
         title: item.title || '未命名新闻',
+        titleParts: highlightTitle(item.title, this.data.keyword),
         summary: item.summary || '',
         categoryText: item.category || '推荐',
         coverUrl: resolveImageUrl(item.coverUrl),

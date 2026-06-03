@@ -36,7 +36,9 @@
     <block wx:for="{{headline.feed}}" wx:key="id">
       <view class="feed-card {{!item.coverUrl ? 'feed-card--no-thumb' : ''}}" data-id="{{item.id}}" bindtap="goDetail">
         <view class="feed-body">
-          <view class="feed-title">{{item.title}}</view>
+          <view class="feed-title">
+            <text wx:for="{{item.titleParts}}" wx:key="index" wx:for-item="part" style="{{part.hl ? 'color:#e24b4b' : ''}}">{{part.text}}</text>
+          </view>
           <view wx:if="{{item.summary}}" class="feed-summary">{{item.summary}}</view>
         </view>
         <image wx:if="{{item.coverUrl}}" class="feed-thumb" src="{{item.coverUrl}}" mode="aspectFill" lazy-load binderror="onCoverError" data-index="{{index}}" data-channel="headline" />
@@ -78,7 +80,9 @@
             <view class="dynamic-time">{{item.relativeTime}}</view>
           </view>
         </view>
-        <view class="dynamic-title">{{item.title}}</view>
+        <view class="dynamic-title">
+          <text wx:for="{{item.titleParts}}" wx:key="index" wx:for-item="part" style="{{part.hl ? 'color:#e24b4b' : ''}}">{{part.text}}</text>
+        </view>
         <view wx:if="{{item.summary}}" class="dynamic-summary">{{item.summary}}</view>
         <image wx:if="{{item.coverUrl}}" class="dynamic-cover" src="{{item.coverUrl}}" mode="aspectFill" lazy-load />
       </view>

@@ -82,4 +82,16 @@ public class NewsController {
     public ApiResponse<Map<String, Object>> repairImages() {
         return ApiResponse.success(newsService.repairImages());
     }
+
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    @PostMapping("/api/admin/news/enrich-content")
+    public ApiResponse<Map<String, Object>> enrichContent() {
+        return ApiResponse.success(newsService.enrichContent());
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    @PostMapping("/api/admin/news/sync/juhe")
+    public ApiResponse<NewsSyncResult> syncJuhe() {
+        return ApiResponse.success(newsService.syncJuheNews());
+    }
 }

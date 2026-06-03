@@ -68,7 +68,10 @@ function resolveImageUrl(path) {
     } catch (e) { /* fall through */ }
     return path
   }
-  return base + (path.startsWith('/') ? path : '/' + path)
+  // Only resolve uploads paths; other relative paths (e.g. /mediafile/...) are from
+  // RSS sources and can't be resolved without the original domain — hide them
+  if (path.startsWith('/uploads/')) return base + path
+  return ''
 }
 
 module.exports = {

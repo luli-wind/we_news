@@ -39,6 +39,11 @@ app:
     storage-type: local
     local-dir: uploads
 
+juhe:
+  api:
+    key: 9548bd798b0c085ac22ee74f18691749
+    base-url: http://v.juhe.cn/toutiao
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

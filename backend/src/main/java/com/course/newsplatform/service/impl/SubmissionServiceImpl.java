@@ -134,15 +134,22 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (!submission.getUserId().equals(SecurityUtils.currentUserId())) {
             throw new BizException(4032, "只能删除自己的投稿");
         }
+        // Also delete the published news if exists (so 动态 doesn't show ghost entries)
+        if (submission.getPublishedNewsId() != null) {
+            newsMapper.deleteById(submission.getPublishedNewsId());
+        }
         postSubmissionMapper.deleteById(id);
         logService.operation("submission", "delete", "用户删除投稿: " + id);
     }
 
     @Override
     public void adminDelete(Long id) {
-        if (postSubmissionMapper.deleteById(id) == 0) {
-            throw new BizException("投稿不存在");
+        PostSubmission submission = postSubmissionMapper.selectById(id);
+        if (submission == null) throw new BizException("投稿不存在");
+        if (submission.getPublishedNewsId() != null) {
+            newsMapper.deleteById(submission.getPublishedNewsId());
         }
+        postSubmissionMapper.deleteById(id);
         logService.operation("submission", "delete_admin", "后台删除投稿: " + id);
     }
 }

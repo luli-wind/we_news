@@ -8,6 +8,8 @@ export const updateNews = (id, data) => request.put(`/api/news/${id}`, data)
 export const deleteNews = (id) => request.delete(`/api/news/${id}`)
 export const syncDomesticNews = (data = {}) => request.post('/api/admin/news/sync/domestic', data)
 export const repairNewsImages = () => request.post('/api/admin/news/repair-images')
+export const enrichNewsContent = () => request.post('/api/admin/news/enrich-content')
+export const syncJuheNews = () => request.post('/api/admin/news/sync/juhe')
 
 export const fetchComments = (params) => request.get('/api/comments', { params })
 export const fetchAllComments = (params) => request.get('/api/comments/admin/all', { params })

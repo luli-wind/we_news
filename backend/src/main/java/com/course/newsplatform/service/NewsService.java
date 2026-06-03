@@ -24,4 +24,8 @@ public interface NewsService {
     long count();
 
     java.util.Map<String, Object> repairImages();
+
+    java.util.Map<String, Object> enrichContent();
+
+    NewsSyncResult syncJuheNews();
 }

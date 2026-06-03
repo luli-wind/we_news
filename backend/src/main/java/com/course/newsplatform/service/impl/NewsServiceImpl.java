@@ -18,11 +18,14 @@ import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.mapper.NewsMapper;
 import com.course.newsplatform.mapper.NewsMediaMapper;
 import com.course.newsplatform.mapper.UserMapper;
+import com.course.newsplatform.client.JuheNewsClient;
 import com.course.newsplatform.service.FileStorageService;
 import com.course.newsplatform.service.LogService;
 import com.course.newsplatform.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 import org.springframework.web.util.HtmlUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -59,7 +62,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NewsServiceImpl implements NewsService {
 
-    private static final int DEFAULT_LIMIT_PER_FEED = 20;
+    private static final int DEFAULT_LIMIT_PER_FEED = 30;
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]+>");
     private static final Pattern IMG_SRC_PATTERN = Pattern.compile("(?i)<img[^>]*\\s+src=[\"']([^\"']+)[\"']");
     private static final List<DateTimeFormatter> DATETIME_FORMATTERS = List.of(
@@ -81,13 +84,14 @@ public class NewsServiceImpl implements NewsService {
     private final NewsMediaMapper newsMediaMapper;
     private final UserMapper userMapper;
     private final FileStorageService fileStorageService;
+    private final JuheNewsClient juheNewsClient;
     private final LogService logService;
 
     @Override
     public PageResponse<News> page(NewsQueryRequest request, boolean includeAllStatus) {
         LambdaQueryWrapper<News> wrapper = new LambdaQueryWrapper<>();
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            wrapper.and(w -> w.like(News::getTitle, request.getKeyword()).or().like(News::getSummary, request.getKeyword()));
+            wrapper.like(News::getTitle, request.getKeyword());
         }
         if (request.getCategory() != null && !request.getCategory().isBlank()) {
             wrapper.eq(News::getCategory, request.getCategory());
@@ -188,7 +192,11 @@ public class NewsServiceImpl implements NewsService {
         for (News news : all) {
             String cover = news.getCoverUrl();
             if (cover != null && !cover.isBlank() && !cover.startsWith("/uploads/")) {
-                String local = downloadCoverImage(cover);
+                String resolved = cover;
+                if (cover.startsWith("/")) {
+                    resolved = tryResolveRelative(cover, news);
+                }
+                String local = downloadCoverImage(resolved);
                 if (local != null) {
                     news.setCoverUrl(local);
                     newsMapper.updateById(news);
@@ -204,6 +212,159 @@ public class NewsServiceImpl implements NewsService {
         result.put("skipped", skipped);
         logService.operation("news", "repair_images", "fixed=" + fixed + " skipped=" + skipped);
         return result;
+    }
+
+    private static final int JUHE_DAILY_LIMIT = 50;
+
+    @Override
+    public NewsSyncResult syncJuheNews() {
+        if (!juheNewsClient.isConfigured()) {
+            throw new BizException("聚合数据 API Key 未配置");
+        }
+
+        String[] categories = {"top", "guonei", "guoji", "keji", "caijing"};
+        NewsSyncResult result = new NewsSyncResult();
+        int imported = 0, skipped = 0, failed = 0, apiCalls = 0;
+
+        // Phase 1: collect all new items from all categories (1 call per category for list)
+        record Candidate(JuheNewsClient.JuheNewsItem item, String cat) {}
+        List<Candidate> candidates = new ArrayList<>();
+        for (String cat : categories) {
+            if (apiCalls >= JUHE_DAILY_LIMIT) break;
+            try {
+                JuheNewsClient.JuheNewsListResponse listResp = juheNewsClient.getNewsList(cat, 1, 20);
+                apiCalls++;
+                if (listResp == null || !listResp.isSuccess()) { failed++; continue; }
+                for (JuheNewsClient.JuheNewsItem item : listResp.getResult().getData()) {
+                    String hash = sha256(item.getUniquekey());
+                    Long exists = newsMapper.selectCount(new LambdaQueryWrapper<News>().eq(News::getOriginHash, hash));
+                    if (exists != null && exists > 0) { skipped++; continue; }
+                    candidates.add(new Candidate(item, cat));
+                }
+            } catch (Exception e) { failed++; }
+        }
+
+        // Phase 2: fetch full content for candidates until we run out of budget
+        for (Candidate c : candidates) {
+            if (apiCalls >= JUHE_DAILY_LIMIT) break;
+            try {
+                JuheNewsClient.JuheNewsItem item = c.item();
+                String content = null;
+                if (item.hasContent()) {
+                    JuheNewsClient.JuheNewsContentResponse contentResp = juheNewsClient.getNewsContent(item.getUniquekey());
+                    apiCalls++;
+                    if (contentResp != null && contentResp.isSuccess() && contentResp.getResult().getContent() != null) {
+                        content = cleanHtmlContent(contentResp.getResult().getContent());
+                    }
+                }
+                // NO fallback — if we can't get full content, skip this article entirely
+                if (content == null || content.isBlank()) continue;
+
+                String coverUrl = null;
+                if (item.getThumbnailPicS() != null && !item.getThumbnailPicS().isBlank()) {
+                    String[] pics = item.getThumbnailPicS().split(",");
+                    coverUrl = downloadCoverImage(pics[0].trim());
+                    if (coverUrl == null) coverUrl = pics[0].trim();
+                }
+
+                News news = new News();
+                news.setTitle(item.getTitle());
+                news.setSummary(truncate(HtmlUtils.htmlUnescape(content.replaceAll("\\s+", " ")), 300));
+                news.setContent(content);
+                news.setCategory(catToChinese(c.cat()));
+                news.setCoverUrl(coverUrl);
+                news.setSourceName(item.getAuthorName());
+                news.setSourceUrl(item.getUrl());
+                news.setOriginHash(sha256(item.getUniquekey()));
+                news.setStatus(ContentStatus.PUBLISHED.name());
+                news.setPublishedAt(LocalDateTime.now());
+                newsMapper.insert(news);
+                imported++;
+            } catch (Exception ex) { failed++; }
+        }
+
+        result.setImported(imported);
+        result.setSkipped(skipped);
+        result.setFailed(failed);
+        logService.operation("news", "sync-juhe",
+                "imported=" + imported + " skipped=" + skipped + " failed=" + failed + " apiCalls=" + apiCalls);
+        return result;
+    }
+
+    private String cleanHtmlContent(String html) {
+        if (html == null || html.isBlank()) return "";
+        try {
+            org.jsoup.nodes.Document doc = Jsoup.parse(html);
+            doc.select("script, style, a").remove();
+            return cleanArticleBody(doc.body());
+        } catch (Exception e) {
+            return html.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim();
+        }
+    }
+
+    private String catToChinese(String cat) {
+        return switch (cat) {
+            case "top" -> "推荐"; case "guonei" -> "国内"; case "guoji" -> "国际";
+            case "keji" -> "科技"; case "caijing" -> "财经"; case "tiyu" -> "体育";
+            case "yule" -> "娱乐"; case "junshi" -> "军事"; case "jiankang" -> "健康";
+            case "qiche" -> "汽车"; case "youxi" -> "游戏";
+            default -> cat;
+        };
+    }
+
+    @Override
+    public Map<String, Object> enrichContent() {
+        List<News> all = newsMapper.selectList(new LambdaQueryWrapper<News>()
+                .eq(News::getStatus, ContentStatus.PUBLISHED.name()));
+        int enriched = 0;
+        int skipped = 0;
+        for (News news : all) {
+            // Skip news that already have long content (already enriched or scraped)
+            if (news.getContent() != null && news.getContent().length() > 600) {
+                skipped++;
+                continue;
+            }
+            ScrapeResult scraped = scrapeArticle(news.getSourceUrl());
+            if (scraped != null && scraped.text().length() > 150) {
+                news.setContent(scraped.text());
+                // Also try to get cover from article if missing
+                if ((news.getCoverUrl() == null || news.getCoverUrl().isBlank())
+                        && scraped.mainImageUrl() != null) {
+                    String local = downloadCoverImage(scraped.mainImageUrl());
+                    if (local != null) {
+                        news.setCoverUrl(local);
+                    }
+                }
+                newsMapper.updateById(news);
+                enriched++;
+            } else {
+                skipped++;
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("total", all.size());
+        result.put("enriched", enriched);
+        result.put("skipped", skipped);
+        logService.operation("news", "enrich_content", "enriched=" + enriched + " skipped=" + skipped);
+        return result;
+    }
+
+    private String tryResolveRelative(String path, News news) {
+        // If we have source_url, extract domain from it
+        if (news.getSourceUrl() != null && !news.getSourceUrl().isBlank()) {
+            try {
+                URI uri = URI.create(news.getSourceUrl());
+                return uri.getScheme() + "://" + uri.getHost() + path;
+            } catch (Exception e) { /* fall through */ }
+        }
+        // Try known RSS source domains
+        for (DomesticFeed feed : allDomesticFeeds()) {
+            try {
+                URI uri = URI.create(feed.url());
+                return uri.getScheme() + "://" + uri.getHost() + path;
+            } catch (Exception e) { /* try next */ }
+        }
+        return path;
     }
 
     @Override
@@ -234,11 +395,26 @@ public class NewsServiceImpl implements NewsService {
 
     protected List<DomesticFeed> allDomesticFeeds() {
         return List.of(
+                // 中国新闻网 (chinanews.com) — 稳定
                 new DomesticFeed("chinanews_top", "中国新闻网", "要闻", "http://www.chinanews.com.cn/rss/importnews.xml"),
+                new DomesticFeed("chinanews_society", "中国新闻网", "社会", "http://www.chinanews.com.cn/rss/society.xml"),
+                new DomesticFeed("chinanews_finance", "中国新闻网", "财经", "http://www.chinanews.com.cn/rss/finance.xml"),
+                new DomesticFeed("chinanews_sports", "中国新闻网", "体育", "http://www.chinanews.com.cn/rss/sports.xml"),
+                new DomesticFeed("chinanews_culture", "中国新闻网", "文化", "http://www.chinanews.com.cn/rss/culture.xml"),
+                new DomesticFeed("chinanews_world", "中国新闻网", "国际", "http://www.chinanews.com.cn/rss/world.xml"),
+                new DomesticFeed("chinanews_tech", "中国新闻网", "科技", "http://www.chinanews.com.cn/rss/tech.xml"),
+                // 人民网 (people.com.cn) — 稳定
                 new DomesticFeed("people_society", "人民网", "社会", "http://www.people.com.cn/rss/society.xml"),
                 new DomesticFeed("people_finance", "人民网", "财经", "http://www.people.com.cn/rss/finance.xml"),
+                new DomesticFeed("people_world", "人民网", "国际", "http://www.people.com.cn/rss/world.xml"),
+                new DomesticFeed("people_culture", "人民网", "文化", "http://www.people.com.cn/rss/culture.xml"),
+                new DomesticFeed("people_tech", "人民网", "科技", "http://www.people.com.cn/rss/scitech.xml"),
+                // 新华网 (xinhuanet.com) — 核心频道
                 new DomesticFeed("xinhuanet_politics", "新华网", "时政", "http://www.xinhuanet.com/politics/news_politics.xml"),
-                new DomesticFeed("xinhuanet_world", "新华网", "国际", "http://www.xinhuanet.com/world/news_world.xml")
+                new DomesticFeed("xinhuanet_world", "新华网", "国际", "http://www.xinhuanet.com/world/news_world.xml"),
+                new DomesticFeed("xinhuanet_finance", "新华网", "财经", "http://www.xinhuanet.com/fortune/news_fortune.xml"),
+                new DomesticFeed("xinhuanet_tech", "新华网", "科技", "http://www.xinhuanet.com/tech/news_tech.xml"),
+                new DomesticFeed("xinhuanet_culture", "新华网", "文化", "http://www.xinhuanet.com/culture/news_culture.xml")
         );
     }
 
@@ -329,7 +505,7 @@ public class NewsServiceImpl implements NewsService {
             throw new BizException("rss item title is empty");
         }
 
-        String summary = truncate(cleanText(item.description()), 500);
+        String summary = truncate(cleanText(item.description()), 300);
         LocalDateTime publishedAt = parseDate(item.pubDate());
         String sourceUrl = blankToNull(item.link());
         String cleanedCategory = cleanText(item.category());
@@ -351,8 +527,9 @@ public class NewsServiceImpl implements NewsService {
             return SyncOutcome.SKIPPED;
         }
 
-        String coverUrl = blankToNull(item.coverUrl());
-        List<String> imageUrls = extractImageUrls(item.description());
+        String baseUrl = sourceUrl != null ? sourceUrl : feed.url();
+        String coverUrl = resolveRelativeUrl(blankToNull(item.coverUrl()), baseUrl);
+        List<String> imageUrls = extractImageUrls(item.description(), baseUrl);
         if (coverUrl == null && !imageUrls.isEmpty()) {
             coverUrl = imageUrls.get(0);
         }
@@ -362,7 +539,7 @@ public class NewsServiceImpl implements NewsService {
         News news = new News();
         news.setTitle(title);
         news.setSummary(summary);
-        news.setContent(buildContent(summary, sourceUrl, title));
+        news.setContent(buildContent(item.description(), sourceUrl, title));
         news.setCategory(category);
         news.setCoverUrl(localCoverUrl != null ? localCoverUrl : coverUrl);
         if (supportsSourceFields) {
@@ -413,13 +590,14 @@ public class NewsServiceImpl implements NewsService {
         List<RssItem> result = new ArrayList<>();
         for (int i = 0; i < items.getLength(); i++) {
             Element element = (Element) items.item(i);
+            String link = nodeText(element, "link");
             result.add(new RssItem(
                     nodeText(element, "title"),
                     nodeText(element, "description"),
-                    nodeText(element, "link"),
+                    link,
                     nodeText(element, "pubDate"),
                     nodeText(element, "category"),
-                    extractCoverUrl(element)
+                    extractCoverUrl(element, link)
             ));
         }
 
@@ -453,7 +631,22 @@ public class NewsServiceImpl implements NewsService {
         }
     }
 
-    private List<String> extractImageUrls(String html) {
+    private String resolveRelativeUrl(String url, String baseUrl) {
+        if (url == null || url.isBlank()) return null;
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+        if (url.startsWith("//")) return "https:" + url;
+        if (url.startsWith("/") && baseUrl != null) {
+            try {
+                URI base = URI.create(baseUrl);
+                return base.getScheme() + "://" + base.getHost() + url;
+            } catch (Exception e) {
+                return url;
+            }
+        }
+        return url;
+    }
+
+    private List<String> extractImageUrls(String html, String baseUrl) {
         if (html == null || html.isBlank()) {
             return List.of();
         }
@@ -462,18 +655,18 @@ public class NewsServiceImpl implements NewsService {
         while (matcher.find()) {
             String url = matcher.group(1).trim();
             if (!url.isBlank()) {
-                urls.add(HtmlUtils.htmlUnescape(url));
+                urls.add(resolveRelativeUrl(HtmlUtils.htmlUnescape(url), baseUrl));
             }
         }
         return urls;
     }
 
-    private String extractCoverUrl(Element itemElement) {
+    private String extractCoverUrl(Element itemElement, String linkUrl) {
         NodeList enclosures = itemElement.getElementsByTagName("enclosure");
         if (enclosures.getLength() > 0 && enclosures.item(0) instanceof Element enclosure) {
             String url = enclosure.getAttribute("url");
             if (url != null && !url.isBlank()) {
-                return url.trim();
+                return resolveRelativeUrl(url.trim(), linkUrl);
             }
         }
 
@@ -481,31 +674,233 @@ public class NewsServiceImpl implements NewsService {
         if (mediaContentNodes.getLength() > 0 && mediaContentNodes.item(0) instanceof Element mediaContent) {
             String url = mediaContent.getAttribute("url");
             if (url != null && !url.isBlank()) {
-                return url.trim();
+                return resolveRelativeUrl(url.trim(), linkUrl);
             }
         }
 
         String description = nodeText(itemElement, "description");
         Matcher matcher = IMG_SRC_PATTERN.matcher(description);
         if (matcher.find()) {
-            return matcher.group(1).trim();
+            return resolveRelativeUrl(matcher.group(1).trim(), linkUrl);
         }
 
         return null;
     }
 
-    private String buildContent(String summary, String sourceUrl, String fallbackTitle) {
-        StringBuilder content = new StringBuilder();
-        if (summary != null && !summary.isBlank()) {
-            content.append(summary).append("\n\n");
+    /** Build rich content from RSS description (no article scraping during sync). */
+    private String buildContent(String rssDescription, String sourceUrl, String fallbackTitle) {
+        // Use Jsoup to clean RSS description into well-formatted paragraphs
+        String desc = cleanToParagraphs(rssDescription);
+        if (desc != null && !desc.isBlank()) {
+            StringBuilder sb = new StringBuilder(desc);
+            if (sourceUrl != null && !sourceUrl.isBlank()) {
+                sb.append("\n\n原文链接：").append(sourceUrl);
+            }
+            return sb.toString();
         }
-        if (sourceUrl != null && !sourceUrl.isBlank()) {
-            content.append("原文链接：").append(sourceUrl);
+        return fallbackTitle;
+    }
+
+    /** Article scraping result: text content + optional main image URL. */
+    private record ScrapeResult(String text, String mainImageUrl) {}
+
+    /** Try to fetch and extract the main article content and image from a URL. */
+    private ScrapeResult scrapeArticle(String url) {
+        if (url == null || url.isBlank()) return null;
+        try {
+            org.jsoup.nodes.Document doc = Jsoup.connect(url)
+                    .userAgent("Mozilla/5.0 (compatible; WeNewsBot/1.0)")
+                    .timeout(8000)
+                    .get();
+
+            // Remove known noise first
+            String[] noiseSelectors = {
+                "script", "style", "nav", "iframe", "noscript",
+                ".nav", ".header", ".footer", ".sidebar", ".menu",
+                ".ad", ".advertisement", ".adv", ".banner",
+                ".related", ".recommend", ".hot-news", ".hotnews",
+                ".share", ".shared", ".social",
+                ".breadcrumb", ".breadcrumbs", ".crumbs",
+                ".tags", ".tag", ".keywords",
+                ".copyright", ".copyright-info", ".disclaimer",
+                ".editor", ".editor-info", ".reporter",
+                ".comment", ".comments", ".comment-list",
+                ".page-nav", ".pagination",
+                ".toolbar", ".tools",
+                "[class*=side]", "[class*=footer]", "[class*=header]"
+            };
+            for (String sel : noiseSelectors) {
+                doc.select(sel).remove();
+            }
+
+            // Try specific article content selectors
+            String[] contentSelectors = {
+                "#artibody", ".TRS_Editor", ".Custom_UnionStyle",
+                "article", "[class*=article-body]", "[class*=article-content]",
+                ".article-content", ".article-body", ".article",
+                "#article", ".post_body", ".entry-content",
+                "#content", ".content", ".main-content",
+                ".news-content", ".text-content", ".text"
+            };
+
+            org.jsoup.nodes.Element articleBody = null;
+            for (String sel : contentSelectors) {
+                Elements elements = doc.select(sel);
+                if (!elements.isEmpty()) {
+                    // Pick the one with most paragraph text (exclude short sidebars)
+                    int bestScore = 0;
+                    for (org.jsoup.nodes.Element el : elements) {
+                        int pCount = el.select("p").size();
+                        int textLen = el.text().length();
+                        if (pCount >= 2 && textLen > bestScore) {
+                            bestScore = textLen;
+                            articleBody = el;
+                        }
+                    }
+                    if (articleBody != null && articleBody.text().length() > 100) break;
+                }
+            }
+
+            // Fallback: collect meaningful paragraphs from body
+            if (articleBody == null) {
+                Elements allP = doc.select("p");
+                if (allP.isEmpty()) return null;
+                StringBuilder sb = new StringBuilder();
+                int count = 0;
+                for (org.jsoup.nodes.Element p : allP) {
+                    org.jsoup.nodes.Element parent = p.parent();
+                    if (parent != null) {
+                        String parentTag = parent.tagName().toLowerCase();
+                        String parentClass = parent.className().toLowerCase();
+                        if (parentClass.contains("nav") || parentClass.contains("side")
+                                || parentClass.contains("foot") || parentClass.contains("head")
+                                || parentClass.contains("ad") || parentClass.contains("menu")) {
+                            continue;
+                        }
+                    }
+                    String text = p.text().trim();
+                    if (text.length() > 15) {
+                        if (sb.length() > 0) sb.append("\n\n");
+                        sb.append(text);
+                        count++;
+                    }
+                }
+                if (count >= 2 && sb.length() > 150) {
+                    return new ScrapeResult(sb.toString(), null);
+                }
+                return null;
+            }
+
+            // Extract main image from article body (for cover)
+            String mainImage = null;
+            Elements imgs = articleBody.select("img");
+            for (org.jsoup.nodes.Element img : imgs) {
+                String src = img.absUrl("src");
+                if (src == null || src.isBlank()) continue;
+                // Skip tiny icons, tracking pixels, etc.
+                String width = img.attr("width");
+                String height = img.attr("height");
+                if (!width.isBlank() && !height.isBlank()) {
+                    try {
+                        if (Integer.parseInt(width) < 100 || Integer.parseInt(height) < 100) continue;
+                    } catch (NumberFormatException e) { /* keep */ }
+                }
+                // Skip obvious non-content images
+                String classes = img.className().toLowerCase();
+                String alt = img.attr("alt").toLowerCase();
+                if (classes.contains("icon") || classes.contains("logo")
+                        || classes.contains("avatar") || classes.contains("qr")
+                        || alt.contains("二维码") || alt.contains("logo")) continue;
+                mainImage = src;
+                break;
+            }
+
+            // Clean the article body into paragraphs
+            String text = cleanArticleBody(articleBody);
+            if (text == null || text.length() < 80) return null;
+            return new ScrapeResult(text, mainImage);
+
+        } catch (Exception e) {
+            return null;
         }
-        if (content.length() == 0) {
-            content.append(fallbackTitle);
+    }
+
+    /** Clean article body element to pure paragraph text. */
+    private String cleanArticleBody(org.jsoup.nodes.Element body) {
+        // Remove any remaining noise elements inside the article
+        body.select("script, style, iframe, noscript, nav, form").remove();
+        body.select("[class*=ad], [class*=share], [class*=comment], " +
+                "[class*=related], [class*=recommend], [class*=editor], " +
+                "[class*=copyright], [class*=breadcrumb], [class*=tag], " +
+                "[class*=toolbar], [class*=video]").remove();
+        // Remove empty elements and short text links
+        body.select("a").forEach(a -> {
+            if (a.text().trim().length() < 4 && a.select("img").isEmpty()) a.remove();
+        });
+
+        StringBuilder sb = new StringBuilder();
+        Elements children = body.children();
+        for (org.jsoup.nodes.Element child : children) {
+            if (child.tagName().equals("img") || child.tagName().equals("figure")
+                    || child.tagName().equals("video")) continue;
+
+            String text = child.text().trim();
+            if (text.isEmpty()) continue;
+
+            // Filter known boilerplate patterns
+            if (isBoilerplate(text)) continue;
+
+            // Filter repeated/similar text (common in some news layouts)
+            if (sb.length() > 0 && text.length() < 30 && sb.toString().contains(text)) continue;
+
+            if (sb.length() > 0) sb.append("\n\n");
+            sb.append(text);
         }
-        return content.toString();
+
+        return sb.length() > 80 ? sb.toString() : body.text().trim();
+    }
+
+    private boolean isBoilerplate(String text) {
+        if (text.length() < 8) return true;
+        return text.startsWith("原标题：") || text.startsWith("责任编辑")
+                || text.startsWith("作者：") || text.startsWith("来源：")
+                || text.startsWith("编辑：") || text.startsWith("记者")
+                || text.startsWith("【责任编辑") || text.startsWith("（原标题")
+                || text.contains("版权声明") || text.contains("转载")
+                || text.contains("更多精彩内容") || text.contains("阅读原文")
+                || text.contains("扫描二维码") || text.contains("关注微信")
+                || text.equals("相关新闻") || text.equals("推荐阅读")
+                || text.startsWith("【") && text.length() < 40;
+    }
+
+    /** Convert HTML description into clean paragraph text. */
+    private String cleanToParagraphs(String html) {
+        if (html == null || html.isBlank()) return "";
+        try {
+            org.jsoup.nodes.Document doc = Jsoup.parse(html);
+            // Remove links, scripts, styles
+            doc.select("a, script, style").remove();
+            Elements paragraphs = doc.select("p, br, div");
+            if (paragraphs.isEmpty()) {
+                return cleanText(html);
+            }
+            StringBuilder sb = new StringBuilder();
+            String text = doc.text();
+            if (text != null && !text.isBlank()) {
+                // Split by common delimiters to create paragraph structure
+                String[] parts = text.split("(?<=[。！？])");
+                for (String part : parts) {
+                    String trimmed = part.trim();
+                    if (trimmed.length() > 4) {
+                        if (sb.length() > 0) sb.append("\n\n");
+                        sb.append(trimmed);
+                    }
+                }
+            }
+            return sb.length() > 0 ? sb.toString() : cleanText(html);
+        } catch (Exception e) {
+            return cleanText(html);
+        }
     }
 
     private String cleanText(String raw) {

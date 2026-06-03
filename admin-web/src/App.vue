@@ -18,7 +18,6 @@
         <el-menu-item index="/news">新闻管理</el-menu-item>
         <el-menu-item index="/comments">评论管理</el-menu-item>
         <el-menu-item index="/submissions">投稿审核</el-menu-item>
-        <el-menu-item v-if="isAdmin" index="/users">用户与角色</el-menu-item>
         <el-menu-item v-if="isAdmin" index="/logs">操作日志</el-menu-item>
       </el-menu>
 

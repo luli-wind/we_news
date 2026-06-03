@@ -1,22 +1,37 @@
-﻿# OS
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .idea/
 .vscode/
 *.iml
+*.iws
 
 # Java
-backend/target/
+target/
+*.class
+*.jar
+*.war
+!gradle/wrapper/gradle-wrapper.jar
+
+# Spring Boot
+backend/logs/
+
+# Maven
 backend/.mvn/
 
 # Node
+node_modules/
 admin-web/node_modules/
 admin-web/dist/
 
 # WeChat
 miniprogram/project.private.config.json
+
+# Uploads (generated files)
+uploads/
 
 # Logs
 *.log
@@ -24,5 +39,14 @@ miniprogram/project.private.config.json
 # Env
 .env
 .env.*
+.env.local
 
-.claude
+# OS patches
+*.patch
+
+# Temp
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
