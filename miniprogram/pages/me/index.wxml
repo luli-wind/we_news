@@ -108,22 +108,5 @@
       <view class="guest-tip-text">登录后可收藏新闻、发表评论、发布原创内容</view>
     </view>
 
-    <view class="menu-group">
-      <view class="menu-row">
-        <view class="menu-icon">🔔</view>
-        <view class="menu-text">消息通知</view>
-        <view class="menu-arrow">›</view>
-      </view>
-      <view class="menu-row">
-        <view class="menu-icon">ℹ️</view>
-        <view class="menu-text">关于我们</view>
-        <view class="menu-arrow">›</view>
-      </view>
-      <view class="menu-row">
-        <view class="menu-icon">⚙️</view>
-        <view class="menu-text">系统设置</view>
-        <view class="menu-arrow">›</view>
-      </view>
-    </view>
   </block>
 </view>

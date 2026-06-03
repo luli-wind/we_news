@@ -98,6 +98,7 @@
 
 <script setup>
 import { reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { fetchDashboard } from '../api/modules'
 
 const stats = reactive({
@@ -120,7 +121,7 @@ onMounted(async () => {
     const data = await fetchDashboard()
     Object.assign(stats, data)
   } catch (e) {
-    // leave defaults
+    ElMessage.error('加载仪表盘数据失败，请检查后端服务')
   }
 })
 </script>

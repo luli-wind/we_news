@@ -18,6 +18,7 @@ import com.course.newsplatform.service.LogService;
 import com.course.newsplatform.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -65,6 +66,7 @@ public class SubmissionServiceImpl implements SubmissionService {
     }
 
     @Override
+    @Transactional
     public void audit(Long id, SubmissionAuditRequest request) {
         PostSubmission submission = postSubmissionMapper.selectById(id);
         if (submission == null) {

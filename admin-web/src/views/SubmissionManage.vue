@@ -221,13 +221,15 @@ const onPageChange = (val) => {
   load()
 }
 
+const approving = ref(false)
 const approve = async (id) => {
-  await auditSubmission(id, {
-    status: 'APPROVED',
-    reviewRemark: ''
-  })
-  ElMessage.success('已通过该投稿')
-  load()
+  try {
+    await auditSubmission(id, { status: 'APPROVED', reviewRemark: '' })
+    ElMessage.success('已通过该投稿')
+    load()
+  } catch (e) {
+    ElMessage.error((e && e.message) || '操作失败')
+  }
 }
 
 const openReject = (id) => {

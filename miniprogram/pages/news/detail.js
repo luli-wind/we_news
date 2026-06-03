@@ -199,6 +199,7 @@ Page({
   },
 
   async deleteComment(e) {
+    if (!this.ensureLogin()) return
     const id = e.currentTarget.dataset.id
     if (!id) return
     wx.showModal({

@@ -1,6 +1,7 @@
 package com.course.newsplatform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.course.newsplatform.common.BizException;
 import com.course.newsplatform.common.PageResponse;
@@ -108,8 +109,10 @@ public class VideoServiceImpl implements VideoService {
         if (video == null) {
             throw new BizException("视频不存在");
         }
-        video.setPlayCount((video.getPlayCount() != null ? video.getPlayCount() : 0) + 1);
-        videoMapper.updateById(video);
+        videoMapper.update(null,
+                new LambdaUpdateWrapper<Video>()
+                        .eq(Video::getId, id)
+                        .setSql("play_count = COALESCE(play_count, 0) + 1"));
     }
 
     private String normalizeStatus(String status) {

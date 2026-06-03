@@ -77,7 +77,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="save">保存</el-button>
+        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -127,30 +127,46 @@ const openCreate = () => {
 }
 
 const openEdit = (row) => {
-  Object.assign(form, row)
+  Object.assign(form, {
+    id: row.id, title: row.title, summary: row.summary,
+    content: row.content, category: row.category,
+    coverUrl: row.coverUrl, status: row.status
+  })
   showDialog.value = true
 }
 
+const saving = ref(false)
 const save = async () => {
   if (!form.title || !form.content) {
     ElMessage.warning('标题和内容不能为空')
     return
   }
-  if (form.id) {
-    await updateNews(form.id, form)
-  } else {
-    await createNews(form)
+  saving.value = true
+  try {
+    if (form.id) {
+      await updateNews(form.id, form)
+    } else {
+      await createNews(form)
+    }
+    ElMessage.success('保存成功')
+    showDialog.value = false
+    load()
+  } catch (e) {
+    ElMessage.error((e && e.message) || '保存失败')
+  } finally {
+    saving.value = false
   }
-  ElMessage.success('保存成功')
-  showDialog.value = false
-  load()
 }
 
 const remove = async (id) => {
-  await ElMessageBox.confirm('确认删除该新闻吗？')
-  await deleteNews(id)
-  ElMessage.success('删除成功')
-  load()
+  try {
+    await ElMessageBox.confirm('确认删除该新闻吗？')
+    await deleteNews(id)
+    ElMessage.success('删除成功')
+    load()
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error((e && e.message) || '删除失败')
+  }
 }
 
 const syncNews = async () => {
