@@ -1,4 +1,4 @@
-const { request } = require('../../utils/request')
+const { request, BASE_URL } = require('../../utils/request')
 const { resolveImageUrl } = require('../../utils/config')
 
 function toParagraphs(content) {
@@ -28,23 +28,33 @@ function flattenComments(roots) {
   const nicknameMap = {}
   roots.forEach((root) => {
     const rootName = root.userNickname || '用户'
+    const rootAvatar = resolveAvatarUrl(root.userAvatar)
     nicknameMap[root.id] = rootName
-    result.push({ ...root, isReply: false, displayName: rootName, timeText: toRelativeTime(root.createdAt) })
+    result.push({ ...root, isReply: false, displayName: rootName, userAvatar: rootAvatar, timeText: toRelativeTime(root.createdAt) })
     if (root.replies && root.replies.length) {
       root.replies.forEach((reply) => {
         const replyName = reply.userNickname || '用户'
+        const replyAvatar = resolveAvatarUrl(reply.userAvatar)
         const parentName = nicknameMap[reply.parentId] || rootName
         nicknameMap[reply.id] = replyName
-        result.push({ ...reply, isReply: true, displayName: replyName, parentNickname: parentName, timeText: toRelativeTime(reply.createdAt) })
+        result.push({ ...reply, isReply: true, displayName: replyName, userAvatar: replyAvatar, parentNickname: parentName, timeText: toRelativeTime(reply.createdAt) })
       })
     }
   })
   return result
 }
 
+function resolveAvatarUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/')) return BASE_URL + url
+  return url
+}
+
 Page({
   data: {
     id: null,
+    targetCommentId: null,
     detail: {},
     authorName: '新闻中心',
     paragraphs: [],
@@ -62,12 +72,15 @@ Page({
   },
 
   onLoad(options) {
-    this.setData({ id: Number(options.id) || 0 })
+    this.setData({
+      id: Number(options.id) || 0,
+      targetCommentId: Number(options.commentId) || null
+    })
     this.loadAll()
   },
 
   async loadAll() {
-    await Promise.all([this.loadDetail(), this.loadComments(), this.loadFavoriteStatus()])
+    await Promise.all([this.loadDetail(), this.loadComments(), this.loadFavoriteStatus(), this.loadLikeStatus()])
   },
 
   async loadDetail() {
@@ -98,7 +111,18 @@ Page({
     try {
       const list = await request('/api/comments', 'GET', { bizType: 'NEWS', bizId: this.data.id })
       const comments = flattenComments(list)
-      this.setData({ comments, commentCount: comments.length })
+      const targetId = this.data.targetCommentId
+      if (targetId) {
+        const idx = comments.findIndex(c => c.id === targetId)
+        if (idx >= 0) {
+          comments[idx].highlighted = true
+        }
+      }
+      this.setData({ comments, commentCount: comments.length }, () => {
+        if (targetId) {
+          this.scrollToComment(targetId)
+        }
+      })
     } catch (error) {
       // comments are optional
     }
@@ -132,13 +156,25 @@ Page({
     return false
   },
 
-  onLike() {
-    const liked = !this.data.liked
-    this.setData({
-      liked,
-      supportCount: liked ? this.data.supportCount + 1 : Math.max(0, this.data.supportCount - 1)
-    })
-    wx.showToast({ title: liked ? '已点赞' : '取消点赞', icon: 'none', duration: 800 })
+  async onLike() {
+    if (!this.ensureLogin()) return
+    try {
+      const data = await request(`/api/news/${this.data.id}/like`, 'POST')
+      this.setData({
+        liked: data.liked,
+        supportCount: data.likeCount
+      })
+      wx.showToast({ title: data.liked ? '已点赞' : '取消点赞', icon: 'none', duration: 800 })
+    } catch (e) {
+      wx.showToast({ title: '操作失败', icon: 'none' })
+    }
+  },
+
+  async loadLikeStatus() {
+    try {
+      const data = await request(`/api/news/${this.data.id}/like-status`)
+      this.setData({ liked: data.liked, supportCount: data.likeCount })
+    } catch (e) { /* optional */ }
   },
 
   async toggleFavorite() {
@@ -217,6 +253,40 @@ Page({
         }
       }
     })
+  },
+
+  scrollToComment(commentId) {
+    setTimeout(() => {
+      wx.pageScrollTo({ selector: `#comment-${commentId}`, duration: 300 })
+      // Remove highlight after animation
+      setTimeout(() => {
+        const idx = this.data.comments.findIndex(c => c.id === commentId)
+        if (idx >= 0) {
+          this.setData({ [`comments[${idx}].highlighted`]: false })
+        }
+      }, 2500)
+    }, 500)
+  },
+
+  onShareAppMessage() {
+    return {
+      title: this.data.detail.title || '今日资讯',
+      path: `/pages/news/detail?id=${this.data.id}`
+    }
+  },
+
+  onShareTimeline() {
+    return {
+      title: this.data.detail.title || '今日资讯',
+      query: `id=${this.data.id}`
+    }
+  },
+
+  onCommentAvatarError(e) {
+    const idx = e.currentTarget.dataset.index
+    if (idx !== undefined) {
+      this.setData({ [`comments[${idx}].userAvatar`]: '' })
+    }
   },
 
   previewImage(e) {

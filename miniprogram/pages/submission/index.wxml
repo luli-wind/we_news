@@ -42,8 +42,8 @@
         </view>
 
         <view wx:if="{{form.mediaUrl}}" class="media-box">
-          <image wx:if="{{hasImage && mediaDisplayUrl}}" class="media-image" src="{{mediaDisplayUrl}}" mode="aspectFill" />
-          <video wx:if="{{hasVideo && mediaDisplayUrl}}" class="media-video" src="{{mediaDisplayUrl}}" controls></video>
+          <image wx:if="{{hasImage}}" class="media-image" src="{{mediaDisplayUrl}}" mode="aspectFill" binderror="onMediaImageError" />
+          <video wx:if="{{hasVideo}}" class="media-video" src="{{mediaDisplayUrl}}" controls></video>
           <view class="remove-media" bindtap="clearMedia">✕</view>
         </view>
       </view>

@@ -35,7 +35,8 @@
     <block wx:for="{{comments}}" wx:key="id">
       <view class="comment-item {{item.isReply ? 'comment-item--reply' : ''}}">
         <view class="comment-top">
-          <view class="comment-avatar">{{item.displayName.substring(0, 1)}}</view>
+          <image wx:if="{{item.userAvatar}}" class="comment-avatar-img" src="{{item.userAvatar}}" mode="aspectFill" />
+          <view wx:else class="comment-avatar">{{item.displayName.substring(0, 1)}}</view>
           <view class="comment-user">{{item.displayName}}</view>
         </view>
         <view wx:if="{{item.isReply && item.parentNickname}}" class="reply-indicator">

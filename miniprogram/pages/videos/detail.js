@@ -1,4 +1,11 @@
-const { request } = require('../../utils/request')
+const { request, BASE_URL } = require('../../utils/request')
+
+function resolveAvatarUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/')) return BASE_URL + url
+  return url
+}
 
 function formatPlayCount(count) {
   const n = Number(count) || 0
@@ -24,14 +31,16 @@ function flattenComments(roots) {
   const nicknameMap = {}
   roots.forEach((root) => {
     const rootName = root.userNickname || '用户'
+    const rootAvatar = resolveAvatarUrl(root.userAvatar)
     nicknameMap[root.id] = rootName
-    result.push({ ...root, isReply: false, displayName: rootName, timeText: toRelativeTime(root.createdAt) })
+    result.push({ ...root, isReply: false, displayName: rootName, userAvatar: rootAvatar, timeText: toRelativeTime(root.createdAt) })
     if (root.replies && root.replies.length) {
       root.replies.forEach((reply) => {
         const replyName = reply.userNickname || '用户'
+        const replyAvatar = resolveAvatarUrl(reply.userAvatar)
         const parentName = nicknameMap[reply.parentId] || rootName
         nicknameMap[reply.id] = replyName
-        result.push({ ...reply, isReply: true, displayName: replyName, parentNickname: parentName, timeText: toRelativeTime(reply.createdAt) })
+        result.push({ ...reply, isReply: true, displayName: replyName, userAvatar: replyAvatar, parentNickname: parentName, timeText: toRelativeTime(reply.createdAt) })
       })
     }
   })

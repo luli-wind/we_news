@@ -34,4 +34,9 @@ public class News {
 
     @TableField(exist = false)
     private String authorName;
+
+    private Long likeCount;
+
+    @TableField(exist = false)
+    private Boolean likedByMe;
 }

@@ -22,7 +22,7 @@ Page({
     const item = e.currentTarget.dataset.item
     if (!item) return
     if (item.bizType === 'NEWS') {
-      wx.navigateTo({ url: `/pages/news/detail?id=${item.bizId}` })
+      wx.navigateTo({ url: `/pages/news/detail?id=${item.bizId}&commentId=${item.id}` })
     } else {
       wx.showToast({ title: '内容已下线', icon: 'none' })
     }

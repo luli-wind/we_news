@@ -1,4 +1,5 @@
 const { request } = require('../../../utils/request')
+const { resolveImageUrl } = require('../../../utils/config')
 
 Page({
   data: {
@@ -14,7 +15,11 @@ Page({
     this.setData({ loading: true })
     try {
       const data = await request('/api/me/favorites', 'GET', { page: 1, pageSize: 50 })
-      this.setData({ list: data && Array.isArray(data.list) ? data.list : [] })
+      const list = (data && Array.isArray(data.list) ? data.list : []).map(item => ({
+        ...item,
+        coverUrl: resolveImageUrl(item.coverUrl)
+      }))
+      this.setData({ list })
     } catch (error) {
       wx.showToast({ title: '加载失败', icon: 'none' })
     } finally {

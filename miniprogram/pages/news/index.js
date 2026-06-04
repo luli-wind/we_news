@@ -71,6 +71,19 @@ Page({
     this.loadFeed()
   },
 
+  onShareAppMessage() {
+    return {
+      title: '今日资讯 - 随时随地了解最新动态',
+      path: '/pages/news/index'
+    }
+  },
+
+  onShareTimeline() {
+    return {
+      title: '今日资讯 - 随时随地了解最新动态'
+    }
+  },
+
   onReachBottom() {
     this.loadMore()
   },

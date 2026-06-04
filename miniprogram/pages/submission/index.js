@@ -1,5 +1,4 @@
 const { request, BASE_URL } = require('../../utils/request')
-const { resolveImageUrl } = require('../../utils/config')
 
 function classifyError(error) {
   const msg = (error && error.message) || ''
@@ -34,7 +33,7 @@ Page({
         'form.content': draft.content || '',
         'form.mediaType': draft.mediaType || 'NONE',
         'form.mediaUrl': draft.mediaUrl || '',
-        'form.mediaDisplayUrl': resolveImageUrl(draft.mediaUrl),
+        'form.mediaDisplayUrl': (draft.mediaUrl && draft.mediaUrl.startsWith('/')) ? BASE_URL + draft.mediaUrl : (draft.mediaUrl || ''),
         hasImage: draft.mediaType === 'IMAGE',
         hasVideo: draft.mediaType === 'VIDEO'
       })
@@ -82,9 +81,10 @@ Page({
             throw new Error(payload.message || '上传失败')
           }
           const isVideo = fileType === 'video'
+          const rawUrl = payload.data.url
           this.setData({
-            'form.mediaUrl': payload.data.url,
-            'form.mediaDisplayUrl': resolveImageUrl(payload.data.url),
+            'form.mediaUrl': rawUrl,
+            'form.mediaDisplayUrl': rawUrl.startsWith('/') ? BASE_URL + rawUrl : rawUrl,
             'form.mediaType': isVideo ? 'VIDEO' : 'IMAGE',
             hasImage: !isVideo,
             hasVideo: isVideo
@@ -101,6 +101,11 @@ Page({
         this.setData({ uploading: false })
       }
     })
+  },
+
+  onMediaImageError() {
+    this.setData({ mediaDisplayUrl: '' })
+    wx.showToast({ title: '图片加载失败', icon: 'none' })
   },
 
   clearMedia() {
