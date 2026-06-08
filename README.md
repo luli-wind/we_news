@@ -34,11 +34,15 @@
 ```
 
 ## 页面展示
+
 ### 小程序端
-![alt text](image.png)
-![alt text](image-1.png)
+<div style="display:flex;gap:12px">
+  <img src="image.png" width="220" alt="首页">
+  <img src="image-1.png" width="220" alt="详情">
+</div>
+
 ### 网页端
-![alt text](image-2.png)
+<img src="image-2.png" width="600" alt="管理后台">
 
 ## 技术栈
 
