@@ -37,7 +37,7 @@ jwt:
 app:
   file:
     storage-type: local
-    local-dir: uploads
+    local-dir: e:/CouresExperiment/mobile_development/project/uploads
 
 juhe:
   api:

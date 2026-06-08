@@ -48,24 +48,41 @@
         <div v-else class="empty-hint">暂无数据</div>
       </div>
 
-      <!-- 快捷操作 -->
+      <!-- 分类占比环形图 -->
       <div class="card-surface">
-        <h3 class="section-title">快捷操作</h3>
-        <div class="quick-actions">
-          <router-link to="/news" class="quick-btn quick-btn--news">
-            <span class="quick-btn__icon">✏️</span>
-            <span>管理新闻</span>
-          </router-link>
-          <router-link to="/submissions" class="quick-btn quick-btn--pending">
-            <span class="quick-btn__icon">📋</span>
-            <span>审核投稿</span>
-            <el-badge v-if="stats.pendingSubmissions > 0" :value="stats.pendingSubmissions" class="quick-badge" />
-          </router-link>
-          <router-link to="/comments" class="quick-btn quick-btn--comment">
-            <span class="quick-btn__icon">💬</span>
-            <span>评论管理</span>
-          </router-link>
+        <h3 class="section-title">新闻分类占比</h3>
+        <div class="donut-wrap" v-if="stats.categories && stats.categories.length > 0">
+          <div class="donut-chart">
+            <svg viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="78" fill="none" stroke="#f0f2f5" stroke-width="26"/>
+              <circle
+                v-for="(cat, idx) in donutSegments"
+                :key="cat.name"
+                cx="100" cy="100" r="78"
+                fill="none"
+                :stroke="cat.color"
+                stroke-width="26"
+                :stroke-dasharray="cat.dashArray"
+                :stroke-dashoffset="cat.dashOffset"
+                stroke-linecap="butt"
+                :transform="cat.transform"
+                style="transition: all 0.8s ease"
+              />
+            </svg>
+            <div class="donut-center">
+              <div class="donut-total">{{ totalNews }}</div>
+              <div class="donut-label">篇新闻</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <span class="legend-item" v-for="(cat, idx) in topCategories" :key="cat.name">
+              <span class="legend-dot" :style="{ background: cat.color }"></span>
+              <span class="legend-name">{{ cat.name }}</span>
+              <span class="legend-value">{{ cat.count }}</span>
+            </span>
+          </div>
         </div>
+        <div v-else class="empty-hint">暂无数据</div>
       </div>
 
       <!-- 最新新闻 -->
@@ -97,9 +114,15 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { fetchDashboard } from '../api/modules'
+
+const DONUT_COLORS = [
+  '#7c3aed', '#ef4444', '#f59e0b', '#10b981', '#3b82f6',
+  '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316',
+  '#6366f1', '#14b8a6', '#e11d48', '#0ea5e9'
+]
 
 const stats = reactive({
   newsCount: 0,
@@ -109,6 +132,35 @@ const stats = reactive({
   categories: [],
   recentNews: [],
   recentSubmissions: []
+})
+
+const totalNews = computed(() => stats.categories.reduce((s, c) => s + c.count, 0))
+
+const topCategories = computed(() => {
+  return [...stats.categories]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+    .map((c, i) => ({ ...c, color: DONUT_COLORS[i % DONUT_COLORS.length] }))
+})
+
+const donutSegments = computed(() => {
+  const total = Math.max(totalNews.value, 1)
+  const circumference = 2 * Math.PI * 78
+  const sorted = [...stats.categories].sort((a, b) => b.count - a.count).slice(0, 10)
+  let cumulative = 0
+  return sorted.map((cat, i) => {
+    const ratio = cat.count / total
+    const len = Math.max(ratio * circumference, 0.5)
+    const seg = {
+      name: cat.name,
+      color: DONUT_COLORS[i % DONUT_COLORS.length],
+      dashArray: `${len} ${circumference - len}`,
+      dashOffset: -cumulative,
+      transform: `rotate(-90 100 100)`
+    }
+    cumulative += len
+    return seg
+  })
 })
 
 const barWidth = (count) => {
@@ -242,40 +294,79 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-/* 快捷操作 */
-.quick-actions {
+/* 环形图 */
+.donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.donut-chart {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  flex-shrink: 0;
+}
+
+.donut-chart svg {
+  width: 100%;
+  height: 100%;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-total {
+  font-size: 38px;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1;
+}
+
+.donut-label {
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.donut-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  justify-content: center;
+  gap: 6px 16px;
 }
 
-.quick-btn {
-  display: flex;
+.legend-item {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.15s;
-  border: 1px solid var(--line);
-  color: var(--ink-1);
-  background: #fff;
+  gap: 6px;
+  font-size: 13px;
 }
 
-.quick-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
-.quick-btn__icon { font-size: 18px; }
+.legend-name {
+  color: #555;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-.quick-btn--news:hover { border-color: #e24b4b; color: #e24b4b; }
-.quick-btn--pending:hover { border-color: #22b573; color: #22b573; }
-.quick-btn--comment:hover { border-color: #0ea5a4; color: #0ea5a4; }
-
-.quick-badge {
-  margin-left: 4px;
+.legend-value {
+  font-weight: 600;
+  color: #888;
 }
 </style>

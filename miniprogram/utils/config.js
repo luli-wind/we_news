@@ -57,20 +57,14 @@ function resolveBaseUrl() {
 
 function resolveImageUrl(path) {
   if (!path || typeof path !== 'string') return ''
+  // Protocol-relative URLs
   if (path.startsWith('//')) return 'https:' + path
+  // External absolute URLs (e.g. WeChat CDN avatars, external images) — return as-is
+  if (/^https?:\/\//i.test(path)) return path
+  // Local upload paths — prepend our server base URL
   const base = resolveBaseUrl()
-  // If it's an absolute URL pointing to our own server (old data), extract path and re-resolve
-  if (/^https?:\/\//i.test(path)) {
-    try {
-      const url = path.replace(/^https?:\/\//i, '')
-      const slashIdx = url.indexOf('/')
-      if (slashIdx > 0) return base + url.substring(slashIdx)
-    } catch (e) { /* fall through */ }
-    return path
-  }
-  // Only resolve uploads paths; other relative paths (e.g. /mediafile/...) are from
-  // RSS sources and can't be resolved without the original domain — hide them
   if (path.startsWith('/uploads/')) return base + path
+  // Unknown relative path — can't resolve, return empty to hide broken image
   return ''
 }
 

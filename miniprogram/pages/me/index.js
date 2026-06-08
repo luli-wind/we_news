@@ -31,7 +31,7 @@ Page({
       this.setData({
         nicknameText: nickname,
         avatarText: String(nickname).substring(0, 1),
-        avatarUrl: avatar
+        avatarUrl: resolveImageUrl(avatar)
       })
       this.loadData()
     }
@@ -189,10 +189,11 @@ Page({
     try {
       const result = await request('/api/me/profile', 'PUT', data)
       const nickname = result && result.nickname ? result.nickname : this.data.nicknameText
-      const avatar = result && result.avatar ? result.avatar : this.data.avatarUrl
+      const avatarRaw = result && result.avatar ? result.avatar : ''
+      const avatar = avatarRaw ? resolveImageUrl(avatarRaw) : this.data.avatarUrl
 
       wx.setStorageSync('nickname', nickname)
-      wx.setStorageSync('avatar', avatar)
+      wx.setStorageSync('avatar', avatarRaw)
 
       this.setData({
         nicknameText: nickname,

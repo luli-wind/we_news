@@ -8,12 +8,18 @@ import com.course.newsplatform.common.SecurityUtils;
 import com.course.newsplatform.dto.PageQuery;
 import com.course.newsplatform.dto.SubmissionAuditRequest;
 import com.course.newsplatform.dto.SubmissionCreateRequest;
+import com.course.newsplatform.entity.Comment;
+import com.course.newsplatform.entity.Favorite;
 import com.course.newsplatform.entity.News;
 import com.course.newsplatform.entity.PostSubmission;
+import com.course.newsplatform.entity.UserNewsLike;
 import com.course.newsplatform.enums.ContentStatus;
 import com.course.newsplatform.enums.SubmissionStatus;
+import com.course.newsplatform.mapper.CommentMapper;
+import com.course.newsplatform.mapper.FavoriteMapper;
 import com.course.newsplatform.mapper.NewsMapper;
 import com.course.newsplatform.mapper.PostSubmissionMapper;
+import com.course.newsplatform.mapper.UserNewsLikeMapper;
 import com.course.newsplatform.service.LogService;
 import com.course.newsplatform.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +34,9 @@ public class SubmissionServiceImpl implements SubmissionService {
 
     private final PostSubmissionMapper postSubmissionMapper;
     private final NewsMapper newsMapper;
+    private final CommentMapper commentMapper;
+    private final FavoriteMapper favoriteMapper;
+    private final UserNewsLikeMapper newsLikeMapper;
     private final LogService logService;
 
     @Override
@@ -136,10 +145,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         if (!submission.getUserId().equals(SecurityUtils.currentUserId())) {
             throw new BizException(4032, "只能删除自己的投稿");
         }
-        // Also delete the published news if exists (so 动态 doesn't show ghost entries)
-        if (submission.getPublishedNewsId() != null) {
-            newsMapper.deleteById(submission.getPublishedNewsId());
-        }
+        deletePublishedNews(submission.getPublishedNewsId());
         postSubmissionMapper.deleteById(id);
         logService.operation("submission", "delete", "用户删除投稿: " + id);
     }
@@ -148,10 +154,17 @@ public class SubmissionServiceImpl implements SubmissionService {
     public void adminDelete(Long id) {
         PostSubmission submission = postSubmissionMapper.selectById(id);
         if (submission == null) throw new BizException("投稿不存在");
-        if (submission.getPublishedNewsId() != null) {
-            newsMapper.deleteById(submission.getPublishedNewsId());
-        }
+        deletePublishedNews(submission.getPublishedNewsId());
         postSubmissionMapper.deleteById(id);
         logService.operation("submission", "delete_admin", "后台删除投稿: " + id);
+    }
+
+    private void deletePublishedNews(Long newsId) {
+        if (newsId == null) return;
+        // Delete child records first to avoid FK constraint errors
+        commentMapper.delete(new LambdaQueryWrapper<Comment>().eq(Comment::getBizId, newsId).eq(Comment::getBizType, "NEWS"));
+        favoriteMapper.delete(new LambdaQueryWrapper<Favorite>().eq(Favorite::getNewsId, newsId));
+        newsLikeMapper.delete(new LambdaQueryWrapper<UserNewsLike>().eq(UserNewsLike::getNewsId, newsId));
+        newsMapper.deleteById(newsId);
     }
 }

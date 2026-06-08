@@ -72,11 +72,24 @@ const logout = () => {
 }
 
 .side {
-  background: linear-gradient(170deg, #1f2b3f, #141e2e);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
   color: #fff;
   padding: 16px;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.side::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -100px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.12), transparent 70%);
+  pointer-events: none;
 }
 
 .brand-wrap {
@@ -85,22 +98,27 @@ const logout = () => {
 
 .brand-pill {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(20, 184, 166, 0.2);
   font-size: 12px;
   letter-spacing: 0.8px;
+  color: #5eead4;
 }
 
 .brand-title {
   margin: 12px 0 0;
   font-size: 24px;
   line-height: 1.1;
+  background: linear-gradient(135deg, #ffffff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .brand-sub {
   margin: 8px 0 0;
-  color: rgba(230, 239, 255, 0.72);
+  color: rgba(148, 163, 184, 0.7);
   font-size: 13px;
 }
 
@@ -108,28 +126,42 @@ const logout = () => {
   border-right: none;
   background: transparent;
   --el-menu-bg-color: transparent;
-  --el-menu-text-color: #b9c7df;
+  --el-menu-text-color: #94a3b8;
   --el-menu-active-color: #ffffff;
-  --el-menu-hover-bg-color: rgba(255, 255, 255, 0.1);
+  --el-menu-hover-bg-color: rgba(255, 255, 255, 0.06);
   --el-menu-item-height: 44px;
   border-radius: 10px;
 }
 
+.side-menu :deep(.el-menu-item) {
+  border-radius: 9px;
+  margin-bottom: 2px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.side-menu :deep(.el-menu-item:hover) {
+  color: #e2e8f0;
+}
+
 .side-menu :deep(.el-menu-item.is-active) {
   border-radius: 9px;
-  background: linear-gradient(125deg, rgba(225, 75, 59, 0.95), rgba(183, 52, 41, 0.95));
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.55), rgba(13, 148, 136, 0.55));
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.25);
+  font-weight: 600;
 }
 
 .side-foot {
   margin-top: auto;
-  padding: 12px;
+  padding: 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .side-foot__label {
   margin: 0;
-  color: rgba(237, 244, 255, 0.6);
+  color: rgba(148, 163, 184, 0.6);
   font-size: 12px;
 }
 
@@ -137,6 +169,7 @@ const logout = () => {
   margin: 6px 0 0;
   font-size: 18px;
   font-weight: 700;
+  color: #e2e8f0;
 }
 
 .main {
